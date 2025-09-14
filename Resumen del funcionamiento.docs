@@ -1,0 +1,182 @@
+Resumen de las funciones en script.js
+Estructura general y flujo de ejecución
+El archivo script.js implementa una aplicación para buscar, reproducir y concatenar clips de video con sus transcripciones. El flujo general es:
+
+Inicialización: Cuando se carga la página, se inicializan referencias a elementos DOM y se cargan videos disponibles.
+Búsqueda: El usuario busca palabras en las transcripciones.
+Visualización: Se muestra el video seleccionado con su transcripción.
+Manipulación: El usuario puede navegar por el video, seleccionar videos adicionales y descargar clips concatenados.
+
+// Variables para el manejo de videos
+let listaVideos = [];                  // Lista de todos los videos disponibles
+let videoActual = null;                // Video seleccionado actualmente
+let acumuladosAtras = 0;               // Videos seleccionados hacia atrás
+let acumuladosAdelante = 0;            // Videos seleccionados hacia adelante
+
+// Referencias a elementos DOM
+let videoPlayer;                       // Contenedor del reproductor
+let videoElement;                      // Elemento <video>
+let videoSrc;                          // Elemento <source> del video
+let videoTitle;                        // Título del video
+
+Funciones principales y su conexión con HTML
+1. Inicialización
+document.addEventListener('DOMContentLoaded', async () => { ... })
+Propósito: Punto de entrada de la aplicación que se ejecuta cuando el DOM está listo.
+Conexión HTML: No está directamente vinculado a elementos específicos, pero inicializa toda la aplicación.
+inicializarReferenciasDOM()
+Propósito: Obtiene referencias a elementos DOM que se usarán frecuentemente.
+Conexión HTML: Se conecta a:
+#video-player: Contenedor principal del reproductor
+#video: Elemento de video HTML5
+#video-src: Origen del video
+#video-title: Título del video mostrado
+#video-control-container: Contenedor de controles de video
+configurarEventos()
+Propósito: Asigna manejadores de eventos a los botones y controles.
+Conexión HTML: Conecta funciones a:
+#btnBuscar → buscar()
+#btnMenos15 → ajustarClip(-15)
+#btnMas15 → ajustarClip(15)
+#menosAtras → expandir(-1, "atras")
+#masAtras → expandir(1, "atras")
+#menosAdelante → expandir(-1, "adelante")
+#masAdelante → expandir(1, "adelante")
+#btnDescargar → descargarConcatenado()
+#busqueda (keypress Enter) → buscar()
+initVideos()
+Propósito: Carga la lista de videos disponibles desde el servidor.
+Conexión HTML: No se conecta directamente con el HTML, pero su resultado afecta a la disponibilidad de videos.
+2. Búsqueda y visualización
+buscar()
+Propósito: Busca transcripciones que contienen una palabra.
+Conexión HTML:
+Lee de #busqueda (campo de texto)
+Muestra resultados en #resultados (contenedor)
+Controla #loading (indicador de carga)
+mostrarCargando(mostrar)
+Propósito: Controla la visibilidad del indicador de carga.
+Conexión HTML: Controla #loading
+ocultarReproductor()
+Propósito: Oculta el reproductor y sus controles.
+Conexión HTML: Oculta #video-player y #video-control-container
+mostrarResultadosBusqueda(resultados)
+Propósito: Muestra resultados de búsqueda como cajas clickeables.
+Conexión HTML:
+Manipula #resultados
+Crea elementos .transcription-box dinámicamente
+Añade eventos clic a cada resultado que llaman a mostrarVideo()
+mostrarVideo(resultado)
+Propósito: Configura y muestra el reproductor de video con la transcripción seleccionada.
+Conexión HTML:
+Limpia #resultados
+Muestra #video-player y #video-control-container
+Llama a configurarReproductor() y mostrarTranscripcion()
+configurarReproductor(resultado)
+Propósito: Configura el video para reproducción.
+Conexión HTML:
+Configura #video-src
+Actualiza #video-title
+Maneja reproducción del elemento <video>
+mostrarTranscripcion(resultado)
+Propósito: Muestra la transcripción seleccionada.
+Conexión HTML:
+Actualiza #selected-transcription con detalles
+Crea botón #btnNuevaBusqueda que llama a ocultarReproductor()
+3. Manipulación de video
+ajustarClip(segundos)
+Propósito: Ajusta la posición actual del video.
+Conexión HTML: Manipula videoElement.currentTime
+expandir(direccion, lado)
+Propósito: Aumenta o disminuye la selección de videos adicionales.
+Conexión HTML: No modifica HTML directamente, pero actualiza variables para la concatenación.
+actualizarContador()
+Propósito: Actualiza el texto que muestra cuántos videos están seleccionados.
+Conexión HTML: Actualiza #contador
+extraerInfoVideo(rutaVideo)
+Propósito: Extrae información del nombre del archivo (versión simplificada).
+Conexión HTML: No modifica HTML directamente.
+4. Descarga y concatenación
+descargarConcatenado()
+Propósito: Envía lista de videos al servidor para concatenarlos y descargar.
+Conexión HTML:
+Controla #download-status
+Actualiza #btnDescargar
+Utiliza mostrarCargando() y actualizarEstadoDescarga()
+actualizarEstadoDescarga(mensaje, tipo)
+Propósito: Actualiza el texto y color del estado de descarga.
+Conexión HTML: Modifica #download-status
+deshabilitarBotonDescarga(deshabilitar, texto)
+Propósito: Deshabilita/habilita el botón de descarga.
+Conexión HTML: Controla #btnDescargar
+manejarErrorDescarga(respuesta)
+Propósito: Maneja errores en la descarga.
+Conexión HTML: Actualiza #download-status mediante actualizarEstadoDescarga()
+descargarArchivo(respuesta)
+Propósito: Inicia la descarga del archivo concatenado.
+Conexión HTML: Crea un elemento <a> temporal para la descarga.
+5. Utilidades
+formatTime(seconds)
+Propósito: Convierte segundos en formato "mm:ss".
+Conexión HTML: No modifica HTML directamente.
+mostrarPopup(mensaje)
+Propósito: Muestra una notificación temporal.
+Conexión HTML: Controla #popup
+Flujo de ejecución detallado
+Inicio de la aplicación:
+
+El evento DOMContentLoaded dispara la inicialización
+Se obtienen referencias a elementos DOM
+Se configuran los eventos para los controles
+Se carga la lista de videos disponibles
+Búsqueda:
+
+Usuario escribe en #busqueda y hace clic en #btnBuscar
+buscar() envía petición al servidor y muestra indicador de carga
+Al recibir respuesta, se oculta el cargador y se muestran resultados
+mostrarResultadosBusqueda() crea elementos clickeables para cada resultado
+Visualización de video:
+
+Usuario hace clic en un resultado → mostrarVideo()
+Se limpia la pantalla de resultados
+configurarReproductor() prepara el video y comienza reproducción
+mostrarTranscripcion() muestra la transcripción y botón de nueva búsqueda
+Se muestran controles para manipular el video
+Manipulación de video:
+
+Usuario puede navegar con botones -15s/+15s → ajustarClip()
+Puede seleccionar videos adicionales con botones +/- → expandir()
+El contador muestra cuántos videos están seleccionados → actualizarContador()
+Concatenación y descarga:
+
+Usuario hace clic en "Descargar clip concatenado" → descargarConcatenado()
+Se muestra indicador de carga y actualiza interfaz
+Se envía petición al servidor con la lista de videos
+Al recibir respuesta, se inicia descarga → descargarArchivo()
+Se muestra notificación de éxito o error
+Nueva búsqueda:
+
+Usuario hace clic en "Nueva búsqueda" → ocultarReproductor()
+Se oculta el reproductor y controles
+El foco vuelve al campo de búsqueda
+
+Interconexión entre funciones
+
+DOMContentLoaded → inicializarReferenciasDOM() + configurarEventos() + initVideos()
+    |
+    ↓
+[btnBuscar clic] → buscar() → mostrarCargando() + mostrarResultadosBusqueda() → ocultarReproductor()
+    |
+    ↓
+[resultado clic] → mostrarVideo() → configurarReproductor() + mostrarTranscripcion() + actualizarContador()
+    |
+    ↓
+[btnMenos15/btnMas15] → ajustarClip()
+    |
+[menosAtras/masAtras/menosAdelante/masAdelante] → expandir() → actualizarContador()
+    |
+    ↓
+[btnDescargar] → descargarConcatenado() → descargarArchivo() + actualizarEstadoDescarga()
+    |
+    ↓
+[btnNuevaBusqueda] → ocultarReproductor()

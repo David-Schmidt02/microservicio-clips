@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Buscador de Transcripciones</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Buscador de Transcripciones</h2>
+  <div style="text-align:center;">
+    <input type="text" id="busqueda" placeholder="Escribe una palabra...">
+    <button id="btnBuscar">Buscar</button>
+    <!-- Indicador de carga -->
+    <div id="loading" class="loading" style="display:none;">
+      <div class="spinner"></div>
+      <div class="loading-text">Procesando...</div>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="container" id="resultados"></div>
+
+  <!-- Reproductor y Transcripción -->
+  <div class="video-player-container" id="video-player" style="display:none;">
+    <div class="video-column">
+      <h3 id="video-title"></h3>
+      <video id="video" controls>
+        <source id="video-src" src="" type="video/mp4">
+        Tu navegador no soporta video HTML5.
+      </video>
+      
+      <!-- Controles de video - inicialmente ocultos -->
+      <div id="video-control-container" style="display:none;">
+        <div class="video-controls">
+          <button id="btnMenos15">⏪ -15s</button>
+          <button id="btnMas15">+15s ⏩</button>
+        </div>
+
+        <!-- Controles atrás y adelante -->
+        <div class="video-controls button-pairs">
+          <div class="button-group">
+            <span class="button-label">Atrás:</span>
+            <div class="button-pair">
+              <button id="menosAtras" class="round remove">-</button>
+              <button id="masAtras" class="round add">+</button>
+            </div>
+          </div>
+          <div class="button-group">
+            <span class="button-label">Adelante:</span>
+            <div class="button-pair">
+              <button id="menosAdelante" class="round remove">-</button>
+              <button id="masAdelante" class="round add">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:10px;">
+          <span id="contador">0 atrás | 0 adelante</span>
+        </div>
+
+        <div class="video-controls">
+          <button id="btnDescargar">⬇ Descargar clip concatenado</button>
+          <div id="download-status" style="display:none; margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Columna para la transcripción seleccionada -->
+    <div class="transcription-column" id="selected-transcription"></div>
+  </div>
+
+  <div id="popup"></div>
+
+  <!-- Importamos el JS -->
+  <script src="script.js"></script>
+</body>
+</html>
