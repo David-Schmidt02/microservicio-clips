@@ -55,6 +55,7 @@ def buscar_palabra(palabra: str = Query(..., min_length=1)):
     Busca transcripciones que contengan la palabra. -> Tengo que ver cómo se hace en Elasticsearch
     """
     # Acá iria una lógica para pegarle al Elasticsearch
+    
     resultados = [
         t for t in transcripciones if palabra.lower() in t["texto"].lower()
     ]
