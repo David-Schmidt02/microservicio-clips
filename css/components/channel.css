@@ -1,0 +1,61 @@
+/* Cajas de canal + lista de transcripciones por canal */
+
+.channel-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.channel-box h3 {
+  text-align: center;
+  margin: 6px 0 12px;
+  color: #fff;
+}
+
+/* Caja de cada transcripción individual */
+.transcription-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xsm);
+  padding: 12px;
+}
+
+.transcription-box:hover {
+  border: 1.5px solid var(--primary);
+  background: #2b3a2d;
+}
+
+.transcription-box h4 {
+  text-align: center;
+  margin: 6px 0 12px;
+  color: #fff;
+}
+
+.transcriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Reutilizamos el look de .channel-box para items de canal */
+.transcriptions-list .item {
+  background: var(--surface-2);
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.transcriptions-list .item:hover {
+  background: #2b3a2d;
+  border-color: var(--primary);
+}
+
+.item .time {
+  font-size: 0.85em;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
+}

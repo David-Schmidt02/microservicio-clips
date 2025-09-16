@@ -1,0 +1,76 @@
+/* Botón base */
+button {
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover { background: var(--primary-hover); }
+button:disabled { background: #555; cursor: not-allowed; }
+
+/* Grupo de botones (pares + labels) */
+.button-pairs {
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+.button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 15px;
+}
+.button-label {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 0.9em;
+}
+.button-pair {
+  display: flex;
+  gap: 10px;
+}
+
+/* Botones redondos */
+button.round {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.2em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Secundario (al hacer una nueva búsqueda) y variantes (añadir/quitar) */
+.btn-secondary {
+  background: var(--border);
+  color: #fff;
+  width: 100%;
+  margin-top: 20px;
+  font-size: 0.9em;
+}
+.btn-secondary:hover { background: #5a5e67; }
+
+button.add { background: var(--success); }
+button.add:hover { background: var(--success-hover); }
+
+button.remove { background: var(--danger); }
+button.remove:hover { background: var(--danger-hover); }
+
+/* Barra de búsqueda superior */
+.search-bar {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+  gap: 10px;
+}
+.search-bar input {
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: none;
+  max-width: 300px;
+}

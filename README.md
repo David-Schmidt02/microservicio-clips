@@ -23,93 +23,111 @@ El microservicio permite a los usuarios:
 - Seleccionar videos adicionales antes o después del segmento encontrado
 - Concatenar y descargar clips personalizados
 
+microservicio-clips/
+│
+
 ## Estructura del Proyecto
 
 ```
 microservicio-clips/
 │
-├── main.py                    # Servidor backend con FastAPI
-├── index.html                 # Estructura HTML de la interfaz
-├── script.js                  # Lógica de frontend en JavaScript
-├── style.css                  # Estilos CSS
-├── videos/                    # Directorio con videos originales
-└── clips/                     # Directorio para guardar videos concatenados
+├── main.py
+├── index.html
+├── README.md
+├── .gitignore
+│
+├── videos/                  # Videos originales
+├── clips/                   # Clips concatenados
+│
+├── css/
+│   ├── main.css
+│   ├── base/
+│   │   └── base.css
+│   ├── components/
+│   │   ├── buttons.css
+│   │   ├── cards.css
+│   │   ├── channel.css
+│   │   ├── loading.css
+│   │   ├── modal.css
+│   │   ├── player.css
+│   │   ├── popup.css
+│   │   └── status.css
+│   ├── layout/
+│   │   └── layout.css
+│   ├── settings/
+│   │   └── tokens.css
+│   └── utilities/
+│       └── animations.css
+│
+├── js/
+│   ├── api.js
+│   ├── main.js
+│   ├── player.js
+│   ├── state.js
+│   ├── ui.js
+│   └── utils.js
+│
+└── transcripciones_mock.py
 ```
+
+---
+
+## Descripción de las carpetas principales
+
+### css/
+- **main.css**: Importa y centraliza los estilos globales.
+- **base/**: Estilos base y resets.
+- **components/**: Estilos de componentes reutilizables (botones, tarjetas, modales, reproductor, etc).
+- **layout/**: Estilos de estructura y disposición general.
+- **settings/**: Variables CSS y tokens de diseño.
+- **utilities/**: Utilidades y animaciones.
+
+### js/
+- **api.js**: Funciones para interactuar con el backend (fetch, endpoints).
+- **main.js**: Punto de entrada, inicialización y lógica principal.
+- **player.js**: Lógica del reproductor de video y controles relacionados.
+- **state.js**: Manejo del estado global de la aplicación.
+- **ui.js**: Renderizado y manipulación del DOM, ventanas modales, resultados, etc.
+- **utils.js**: Funciones utilitarias y helpers generales.
+
+---
+
+
 
 ## Flujo de Trabajo Detallado
 
 ### 1. Inicialización
 
-Cuando el usuario abre la aplicación en el navegador:
-
-1. **Carga de la página**: Se inicializa la interfaz de usuario.
-2. **Inicialización del sistema**:
-   - Se establecen referencias a elementos DOM importantes
-   - Se configuran manejadores de eventos para botones y controles
-   - Se carga la lista de videos disponibles desde el servidor
+Al abrir la aplicación:
+- Se cargan los estilos y scripts principales.
+- Se inicializan referencias a elementos del DOM y eventos de UI.
+- Se obtiene la lista de videos disponibles desde el backend.
 
 ### 2. Búsqueda de Transcripciones
 
-1. **Entrada del usuario**: El usuario escribe una palabra en el campo de búsqueda y hace clic en "Buscar".
-2. **Proceso de búsqueda**:
-   - Se muestra un indicador de carga
-   - Se envía la consulta al servidor vía API
-   - El servidor busca la palabra en las transcripciones de todos los videos
-3. **Visualización de resultados**:
-   - Se oculta el indicador de carga
-   - Se muestran los resultados como cajas clickeables con fragmentos de texto
-   - Cada resultado incluye información sobre el video y el contexto donde apareció la palabra
+- El usuario ingresa una palabra y presiona Enter o hace clic en "Buscar".
+- Se muestra un loader mientras se consulta el backend.
+- Se muestran los resultados como tarjetas agrupadas por canal.
 
 ### 3. Selección y Visualización de Video
 
-1. **Selección del usuario**: El usuario hace clic en un resultado de búsqueda.
-2. **Preparación del video**:
-   - Se ocultan los resultados de búsqueda
-   - Se configura el reproductor de video con la ruta del archivo correspondiente
-   - Se establece el video actual como punto de referencia
-   - Se inicializa el video para comenzar desde el segundo 0
-3. **Visualización**:
-   - Se muestra el reproductor de video en pantalla
-   - Se muestra la transcripción seleccionada a la derecha
-   - Se muestran los controles para manipular el video
+- Al hacer clic en un resultado, se muestra el reproductor con el video y la transcripción.
+- Se pueden ver detalles del video y del canal.
 
 ### 4. Manipulación del Video
 
-Una vez que el usuario está viendo un video, puede:
-
-1. **Navegar dentro del video**:
-   - Botón "-15s": Retroceder 15 segundos
-   - Botón "+15s": Avanzar 15 segundos
-   
-2. **Seleccionar videos adicionales**:
-   - Botones "+/-" para "Atrás": Añadir/quitar hasta 3 videos anteriores al actual
-   - Botones "+/-" para "Adelante": Añadir/quitar hasta 3 videos posteriores al actual
-   
-3. **Ver detalles de la transcripción**:
-   - Texto completo de la transcripción
-   - Información sobre el video (nombre, fecha)
+- Controles para avanzar/retroceder 15 segundos.
+- Botones para agregar/quitar videos anteriores o siguientes (máx. 3 en cada dirección).
+- Contador visual de la selección.
 
 ### 5. Concatenación y Descarga
 
-1. **Inicio del proceso**:
-   - El usuario hace clic en "Descargar clip concatenado"
-   - Se muestra un indicador de carga
-   - Se actualiza el estado de la operación en la interfaz
-   
-2. **Proceso en el servidor**:
-   - Se envía al servidor la lista de videos a concatenar
-   - El servidor utiliza FFmpeg para concatenar los videos
-   - Se genera un nuevo archivo con el resultado
-   
-3. **Finalización**:
-   - El navegador recibe el archivo concatenado
-   - Se inicia automáticamente la descarga
-   - Se muestra un mensaje de éxito o error
+- El usuario puede descargar un clip concatenado con la selección actual.
+- El backend procesa la solicitud y devuelve el archivo listo para descargar.
 
 ### 6. Nueva Búsqueda
 
-- El usuario puede hacer clic en "Nueva búsqueda" para volver al estado inicial
-- Se oculta el reproductor y se enfoca el campo de búsqueda
+- El usuario puede volver a buscar y reiniciar el flujo en cualquier momento.
 
 ## Frontend: Interfaz de Usuario
 

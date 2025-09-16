@@ -14,26 +14,7 @@ OUTPUT_DIR = "clips"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Datos simulados como si vinieran de Elasticsearch
-transcripciones = [
-    {
-        "texto": "En este fragmento hablamos de microservicios y elasticsearch",
-        "timestamp": "2025-09-13T10:00:00",
-        "video": "video_1.mp4",
-        "segundo_inicio": 75
-    },
-    {
-        "texto": "Aquí aparece la palabra python en una transcripción de prueba",
-        "timestamp": "2025-09-13T10:01:30",
-        "video": "video_2.mp4",
-        "segundo_inicio": 120
-    },
-    {
-        "texto": "Este es otro ejemplo donde mencionamos microservicios y bases de datos",
-        "timestamp": "2025-09-13T10:03:00",
-        "video": "video_3.mp4",
-        "segundo_inicio": 200
-    }
-]
+
 
 # === CORS ===
 app.add_middleware(
@@ -49,59 +30,31 @@ app.add_middleware(
 FFMPEG_BIN = "ffmpeg"
 
 # === Endpoints ===
+from transcripciones_mock import get_transcripciones
 @app.get("/buscar")
 def buscar_palabra(palabra: str = Query(..., min_length=1)):
     """
     Busca transcripciones que contengan la palabra. -> Tengo que ver cómo se hace en Elasticsearch
     """
     # Acá iria una lógica para pegarle al Elasticsearch
-    resultados = [
-        t for t in transcripciones if palabra.lower() in t["texto"].lower()
-    ]
+    resultados = get_transcripciones(palabra)
     return {"resultados": resultados}
 
 
 @app.get("/videos")
-def listar_videos():
+def obtener_lista_videos(transcripcionId: int = Query(..., ge=1)):
     """
-    Lista todos los videos disponibles en la carpeta.
+    Devuelve la lista de videos asociados a una transcripción.
+    Args:
+        transcripcionId (int): ID de la transcripción
     """
-    if not os.path.exists(VIDEO_DIR):
-        return {"videos": []}
-    
-    # Versión simplificada que solo lista archivos en el directorio principal
-    # sin tener en cuenta la estructura de carpetas
-    archivos = [f for f in os.listdir(VIDEO_DIR) if f.lower().endswith((".mp4", ".ts"))]
-    
-    # Ordenar videos numéricamente por número en lugar de alfabéticamente
-    import re
-    def extraer_numero(nombre_archivo):
-        match = re.search(r'(\d+)', nombre_archivo)
-        if match:
-            return int(match.group(1))
-        return float('inf')  # Si no hay número, lo ponemos al final
-    
-    archivos = sorted(archivos, key=extraer_numero)
-    
-    # Código comentado para la versión que maneja subcarpetas (para uso futuro)
-    """
-    videos = []
-    # Recorrer el directorio de videos y sus subcarpetas
-    for root, dirs, files in os.walk(VIDEO_DIR):
-        for file in files:
-            # Incluir archivos .mp4 y .ts
-            if file.lower().endswith((".mp4", ".ts")):
-                # Obtener la ruta relativa desde VIDEO_DIR
-                ruta_relativa = os.path.relpath(os.path.join(root, file), VIDEO_DIR)
-                # Convertir backslashes a forward slashes si estamos en Windows 
-                ruta_relativa = ruta_relativa.replace("\\", "/")
-                videos.append(ruta_relativa)
-    
-    return {"videos": sorted(videos)}
-    """
-    
-    return {"videos": archivos}
-
+    # Simulación de datos. En un caso real, esto vendría de una base de datos o Elasticsearch
+    transcripciones = get_transcripciones("")
+    ids_deseados = set(range(max(0, transcripcionId - 3), transcripcionId + 4))
+    transcripciones_a_enviar = [t for t in transcripciones if t["id"] in ids_deseados]
+    for t in transcripciones_a_enviar:
+        print(f"Transcripción encontrada: {t['id']} - {t['video']}")
+    return {"videos": transcripciones_a_enviar}
 
 @app.post("/concatenar")
 def concatenar_videos(videos: list[str] = Body(..., embed=True)):

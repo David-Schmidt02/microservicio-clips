@@ -1,14 +1,4 @@
-/**
- * APLICACIÓN DE BÚSQUEDA Y REPRODUCCIÓN DE TRANSCRIPCIONES DE VIDEO
- * 
- * Esta aplicación permite buscar palabras en transcripciones de videos,
- * reproducir los segmentos encontrados, y concatenar varios videos para
- * crear clips personalizados.
- */
-
-// ==========================================
-// VARIABLES GLOBALES
-// ==========================================
+import { log } from "winjs";
 
 // Variables para el manejo de videos
 let listaVideos = [];                  // Lista de todos los videos disponibles
@@ -21,32 +11,6 @@ let videoPlayer;                       // Contenedor del reproductor
 let videoElement;                      // Elemento <video> HTML5
 let videoSrc;                          // Elemento <source> dentro del video
 let videoTitle;                        // Elemento para mostrar el título del video
-
-// Cargar la lista de videos disponibles desde el servidor
-async function initVideos() {
-  try {
-    const res = await fetch("http://127.0.0.1:8000/videos");
-    if (!res.ok) {
-      throw new Error(`Error HTTP: ${res.status}`);
-    }
-    const data = await res.json();
-    
-    // Ordenar correctamente los videos por número
-    const videos = data.videos || [];
-    listaVideos = videos.sort((a, b) => {
-      // Extraer números de los nombres de los videos (ej: video_1.mp4 -> 1)
-      const numA = parseInt(a.match(/(\d+)/)[0]);
-      const numB = parseInt(b.match(/(\d+)/)[0]);
-      return numA - numB; // Ordenar numéricamente
-    });
-    
-    console.log("Videos cargados y ordenados numéricamente:", listaVideos);
-    return listaVideos;
-  } catch (error) {
-    console.error("Error al cargar videos:", error);
-    throw error;
-  }
-}
 
 // Inicializar los manejadores de eventos después de cargar el DOM
 
@@ -117,6 +81,7 @@ function mostrarResultadosBusqueda(resultados) {
 // Mostrar el video seleccionado con su transcripción
 function mostrarVideo(resultado) {
   // Resetear estado
+  console.log("mostrarVideo llamado con resultado:", resultado);
   videoActual = resultado.video;
   acumuladosAtras = 0;
   acumuladosAdelante = 0;
@@ -544,14 +509,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   configurarEventos();
 
   // Cargar la lista de videos desde el servidor -> Lo mejor sería no cargar toda la lista, sino hacerlo a pedido
-  
-  try {
-    await initVideos();
-    console.log("Videos cargados correctamente:", listaVideos);
-  } catch (error) {
-    console.error("Error al inicializar videos:", error);
-    mostrarPopup("Error de conexión con el servidor");
-  }
   
 });
 

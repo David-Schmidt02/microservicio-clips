@@ -1,0 +1,24 @@
+/* Declaramos el orden de capas */
+@layer reset, base, layout, components, utilities;
+
+/* 1) Tokens (variables). Tip: dejarlos SIN capa para que estén disponibles en todas. */
+@import url("./settings/tokens.css");
+
+/* 2) Base */
+@import url("./base/base.css") layer(base);
+
+/* 3) Layout */
+@import url("./layout/layout.css") layer(layout);
+
+/* 4) Componentes */
+@import url("./components/buttons.css")    layer(components);
+@import url("./components/cards.css")      layer(components);
+@import url("./components/channel.css")    layer(components);
+@import url("./components/player.css")     layer(components);
+@import url("./components/popup.css")      layer(components);
+@import url("./components/loading.css")    layer(components);
+@import url("./components/status.css")     layer(components);
+@import url("./components/modal.css")      layer(components);
+
+/* 5) Utilidades (animaciones, helpers) */
+@import url("./utilities/animations.css")  layer(utilities);

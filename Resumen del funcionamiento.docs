@@ -64,7 +64,7 @@ mostrarResultadosBusqueda(resultados)
 Propósito: Muestra resultados de búsqueda como cajas clickeables.
 Conexión HTML:
 Manipula #resultados
-Crea elementos .transcription-box dinámicamente
+Crea elementos .channel-box dinámicamente
 Añade eventos clic a cada resultado que llaman a mostrarVideo()
 mostrarVideo(resultado)
 Propósito: Configura y muestra el reproductor de video con la transcripción seleccionada.

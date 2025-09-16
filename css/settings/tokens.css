@@ -1,0 +1,24 @@
+:root {
+  /* Colores */
+  --bg: #23272e;
+  --surface: #2d313a;
+  --surface-2: #31363f;
+  --border: #4a4e57;
+  --text: #e6e6e6;
+  --muted: #bbb;
+
+  --primary: #3a3;
+  --primary-hover: #2a2;
+
+  --success: #28a745;
+  --success-hover: #218838;
+  --danger: #dc3545;
+  --danger-hover: #c82333;
+
+  /* Miscelánea */
+  --radius-md: 12px;
+  --radius-sm: 6px;
+  --radius-xsm: 2px;
+
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.18);
+}
