@@ -19,6 +19,8 @@
 @import url("./components/loading.css")    layer(components);
 @import url("./components/status.css")     layer(components);
 @import url("./components/modal.css")      layer(components);
+@import url("./components/search.css")     layer(components);
+
 
 /* 5) Utilidades (animaciones, helpers) */
 @import url("./utilities/animations.css")  layer(utilities);

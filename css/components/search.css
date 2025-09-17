@@ -1,0 +1,17 @@
+.search-input {
+    font-size: 1em;
+    /* Utilidades solicitadas */
+    color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+    --tw-text-opacity: 1;
+    padding: 0.5rem;
+    background-color: rgb(31 41 55 / var(--tw-bg-opacity, 1));
+    --tw-bg-opacity: 1;
+    border-color: rgb(55 65 81 / var(--tw-border-opacity, 1));
+    --tw-border-opacity: 1;
+    border-width: 1px;
+    border-radius: 0.5rem;
+    width: 30%;
+    max-width: 400px;
+    margin-bottom: 1em;
+}
+

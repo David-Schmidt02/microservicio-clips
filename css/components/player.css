@@ -7,21 +7,23 @@
   border: 1.5px solid var(--border);
   box-shadow: var(--shadow-md);
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: row; /* mejor en columna si sumás título o descripción */
   justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
 }
 
 .video-column {
   flex: 1;
   min-width: 300px;
   max-width: 650px;
+  padding: 15px;
   text-align: center;
 }
 
 .transcription-column {
-  flex: 1;
+  align-self: center;
+  flex: 2;
   min-width: 250px;
   max-width: 350px;
   background: var(--surface-2);
@@ -32,16 +34,31 @@
 }
 
 .video-player-container h3 {
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 10px;
   color: #fff;
+  font-size: 1.2rem;
+  text-align: center;
 }
 
-.video-player-container video {
+.video-player-container video,
+.video-player-container .video-js {
   width: 100%;
-  max-width: 640px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-width: 800px;  /* un poco más ancho para HD */
+  border-radius: 10px;
+  overflow: hidden; /* para evitar bordes raros */
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
 }
+
+.video-player-container video,
+.video-player-container .video-js {
+  aspect-ratio: 16/9;
+  height: auto;
+}
+
 
 .selected-channel-title {
   font-weight: bold;

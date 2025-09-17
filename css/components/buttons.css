@@ -32,6 +32,18 @@ button:disabled { background: #555; cursor: not-allowed; }
   gap: 10px;
 }
 
+/* Boton search */
+.btn-green {
+  background: var(--border);
+  background-color: rgb(22 163 74);
+  font-size: 1em;
+  padding: 8px 12px;
+}
+
+.btn-green:hover {
+  background-color: #15803D;
+}
+
 /* Botones redondos */
 button.round {
   width: 40px;
@@ -53,7 +65,7 @@ button.round {
   margin-top: 20px;
   font-size: 0.9em;
 }
-.btn-secondary:hover { background: #5a5e67; }
+.btn-secondary:hover { background:  #15803D;}
 
 button.add { background: var(--success); }
 button.add:hover { background: var(--success-hover); }
@@ -74,3 +86,4 @@ button.remove:hover { background: var(--danger-hover); }
   border: none;
   max-width: 300px;
 }
+

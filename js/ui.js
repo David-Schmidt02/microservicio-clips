@@ -79,12 +79,12 @@ export function renderResultados(resultados, onClickVideo) {
 }
 
 // ventana con la transcripcion completa seleccionada
-export function mostrarTranscripcionSeleccionadaCompleta(resultado, mostrarVideo) {
+export function mostrarTranscripcionSeleccionadaCompleta(transcripcion, mostrarVideo) {
   // Elimina cualquier modal anterior
   const prev = document.getElementById("modal-transcripcion");
   if (prev) prev.remove();
 
-  const info = extraerInfoVideo(resultado.video);
+  //const info = extraerInfoVideo(transcripcion.video);
 
   // Overlay
   const overlay = document.createElement("div");
@@ -111,7 +111,7 @@ export function mostrarTranscripcionSeleccionadaCompleta(resultado, mostrarVideo
   scrollBox.className = "modal-scroll";
   const text = document.createElement("div");
   text.className = "modal-text";
-  text.textContent = resultado.texto;
+  text.textContent = transcripcion.texto;
   scrollBox.appendChild(text);
 
 
@@ -121,7 +121,7 @@ export function mostrarTranscripcionSeleccionadaCompleta(resultado, mostrarVideo
   btnVerVideo.textContent = "Ver clip";
   btnVerVideo.addEventListener("click", () => {
     overlay.remove();
-    mostrarVideo(resultado); // usa tu función existente
+    mostrarVideo(transcripcion); // usa tu función existente
   });
 
   // Cerrar modal al hacer click fuera
@@ -138,7 +138,10 @@ export function mostrarTranscripcionSeleccionadaCompleta(resultado, mostrarVideo
 // Render de panel derecho (transcripción seleccionada) — con info del archivo habilitada
 export function renderTranscripcionSeleccionadaVideo(resultado) {
   const cont = document.getElementById("selected-transcription");
-  const info = extraerInfoVideo(resultado.video);
+  const info = extraerInfoVideo(resultado);
+
+  console.log("Info extraida del video:", info);
+  console.log("Transcripción seleccionada:", resultado);
 
   cont.innerHTML = "";
   const title = document.createElement("div");
@@ -152,11 +155,8 @@ export function renderTranscripcionSeleccionadaVideo(resultado) {
   const meta = document.createElement("div");
   meta.className = "selected-transcription-info";
   meta.innerHTML = `
-    <p><strong>Fecha:</strong> ${formatTs(resultado.timestamp)}</p>
-    <p><strong>Canal:</strong> ${info.canal}</p>
-    <p><strong>Video:</strong> ${info.nombreCorto}</p>
-    <p><strong>Fecha video:</strong> ${info.fecha}</p>
-    <p><strong>Posición:</strong> ${formatTime(resultado.segundo_inicio || 0)}</p>
+    <p><strong>Fecha:</strong> ${formatTs(resultado.start_timestamp)}</p>
+    <p><strong>Canal:</strong> ${resultado.canal}</p>
   `;
 
   const btn = document.createElement("button");

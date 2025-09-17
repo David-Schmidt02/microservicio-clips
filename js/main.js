@@ -16,7 +16,7 @@ async function buscar() {
     mostrarCargando(true);
     const data = await buscarCoincidenciasElastic(palabra);
     mostrarCargando(false);
-    ocultarReproductor();
+    ocultarReproductor(); // data.resultados = transcripciones que matchean con las palabras
     renderResultados(data.resultados, mostrarVideo); // onClick -> mostrarVideo
     mostrarPopup(`Se encontraron ${data.resultados?.length || 0} resultados`);
   } catch (e) {
@@ -40,14 +40,15 @@ document.addEventListener("DOMContentLoaded", () => {
       buscar();
     }
   });
-
-  document.getElementById("btnMenos15").addEventListener("click", () => ajustarClip(-15));
-  document.getElementById("btnMas15").addEventListener("click", () => ajustarClip(15));
-
+// Podemos aprovechar esta funcion en el futuro con un expandir distinto
+  //document.getElementById("btnMenos15").addEventListener("click", () => ajustarClip(-15));
+  //document.getElementById("btnMas15").addEventListener("click", () => ajustarClip(15));
+  /*
   document.getElementById("menosAtras").addEventListener("click", () => expandir(-1, "atras"));
   document.getElementById("masAtras").addEventListener("click", () => expandir(1, "atras"));
   document.getElementById("menosAdelante").addEventListener("click", () => expandir(-1, "adelante"));
   document.getElementById("masAdelante").addEventListener("click", () => expandir(1, "adelante"));
+  */
 
 
   document.getElementById("btnDescargar").addEventListener("click", descargarConcatenado);

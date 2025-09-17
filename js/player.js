@@ -1,13 +1,8 @@
-import { state, setVideoActual,setListaVideos , resetSeleccion, indiceActual } from "./state.js";
-import { obtenerListaVideos, concatenarVideos } from "./api.js";
-import {
-  mostrarCargando, mostrarPopup, formatTime,
-} from "./utils.js";
-import {
-  getRefs, mostrarControles, ocultarReproductor, scrollToPlayer,
-  renderTranscripcionSeleccionadaVideo, actualizarContador,
-  actualizarEstadoDescarga, deshabilitarBotonDescarga, setTituloPlayer
-} from "./ui.js";
+import { state, setVideoActual, setListaVideos , resetSeleccion, indiceActual, setCanalActual, setFecha } from "./state.js";
+import { obtenerListaVideos, concatenarYDescargar } from "./api.js";
+import { mostrarCargando, mostrarPopup, formatTime, } from "./utils.js";
+import { getRefs, mostrarControles, ocultarReproductor, scrollToPlayer, renderTranscripcionSeleccionadaVideo, actualizarContador,
+  actualizarEstadoDescarga, deshabilitarBotonDescarga, setTituloPlayer } from "./ui.js";
 
 const MAX_ADICIONALES = 3;
 
@@ -21,7 +16,7 @@ async function ensureVideosCargados() {
 // Configurar el reproductor con el video seleccionado
 function configurarReproductor(nombreArchivo) {
   const { videoElement, videoSrc } = getRefs();
-  videoSrc.src = `./videos/${nombreArchivo}`;
+  videoSrc.src = `./canales/${state.canalActual}/${nombreArchivo}`;
   videoElement.load();
 
   videoElement.onloadedmetadata = () => {
@@ -34,12 +29,18 @@ function configurarReproductor(nombreArchivo) {
 }
 
 // Mostrar un resultado (abrir player + panel derecho)
-export async function mostrarVideo(resultado) {
-  const videos = await obtenerListaVideos(resultado.id);
-  
+export async function mostrarVideo(transcripcion_resultado) {
+  const canal = transcripcion_resultado.canal;
+  const timestamp_start = transcripcion_resultado.start_timestamp;
+  const timestamp_end = transcripcion_resultado.end_timestamp;
+  const videos = await obtenerListaVideos(canal, timestamp_start, timestamp_end);
+
+
   console.log("Videos obtenidos del servidor:", videos);
   // Estado
-  setVideoActual(resultado.video);
+  setVideoActual(canal, timestamp_start, timestamp_end);
+  setCanalActual(canal);
+  setFecha(timestamp_start);
   setListaVideos(videos);
   resetSeleccion();
 
@@ -59,12 +60,12 @@ export async function mostrarVideo(resultado) {
   if (resultadosDiv) resultadosDiv.innerHTML = "";
 
   // Player y panel
-  configurarReproductor(resultado.video);
-  renderTranscripcionSeleccionadaVideo(resultado);
+  configurarReproductor(state.videoActual);
+  renderTranscripcionSeleccionadaVideo(transcripcion_resultado);
 
   // Mostrar controles y actualizar contador
   mostrarControles();
-  actualizarContador();
+  //actualizarContador();
 
   scrollToPlayer();
 }
@@ -148,7 +149,7 @@ export async function descargarConcatenado() {
   const textoOriginal = btn.textContent;
 
   try {
-    const res = await concatenarVideos(seleccion);
+    const res = await concatenarYDescargar(seleccion, state.canalActual);
 
     mostrarCargando(false);
     deshabilitarBotonDescarga(false, textoOriginal);

@@ -7,10 +7,10 @@
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-  <h2>Buscador de Transcripciones</h2>
+  <h2 class="text-3xl font-bold text-blue-400">Buscador de Transcripciones</h2>
   <div style="text-align:center;">
-    <input type="text" id="busqueda" placeholder="Escribe una palabra...">
-    <button id="btnBuscar">Buscar</button>
+    <input type="text" id="busqueda" class="search-input" placeholder="Escribe una palabra...">
+    <button class="btn-green" id="btnBuscar">Buscar</button>
     <!-- Indicador de carga -->
     <div id="loading" class="loading" style="display:none;">
       <div class="spinner"></div>
@@ -22,7 +22,7 @@
   <div class="container" id="resultados"></div>
 
   <!-- Reproductor y Transcripción -->
-  <div class="video-player-container" id="video-player" style="display:none;">
+  <div class="video-player-container" id="video-player" style="flex-direction: row; display: none;">
     <div class="video-column">
       <h3 id="video-title"></h3>
       <video id="video" controls>
@@ -31,13 +31,9 @@
       </video>
       
       <!-- Controles de video - inicialmente ocultos -->
-      <div id="video-control-container" style="display:none;">
-        <div class="video-controls">
-          <button id="btnMenos15">-15s</button>
-          <button id="btnMas15">+15s</button>
-        </div>
-
-        <!-- Controles atrás y adelante -->
+      <div id="video-control-container" style="display:row;">
+        <!-- Controles para concatenar videos atrás y adelante -->
+      <!--  
         <div class="video-controls button-pairs">
           <div class="button-group">
             <span class="button-label">Atrás:</span>
@@ -54,13 +50,13 @@
             </div>
           </div>
         </div>
-
+      
         <div style="text-align:center; margin-top:10px;">
           <span id="contador">0 atrás | 0 adelante</span>
         </div>
-
+      -->
         <div class="video-controls">
-          <button id="btnDescargar">⬇ Descargar clip concatenado</button>
+          <button class="btn-green" id="btnDescargar">Descargar clip concatenado</button>
           <div id="download-status" style="display:none; margin-top:10px;"></div>
         </div>
       </div>

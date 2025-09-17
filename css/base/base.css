@@ -17,6 +17,20 @@ h2 {
   margin: 20px;
 }
 
+.text-blue-400 {
+    --tw-text-opacity: 1;
+    color: rgb(96 165 250 / var(--tw-text-opacity, 1));
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+}
+
 input, button {
   font-size: 1em;
 }
