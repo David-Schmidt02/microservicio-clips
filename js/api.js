@@ -13,13 +13,22 @@ export async function obtenerListaVideos(canal, start_timestamp, end_timestamp) 
   return Array.isArray(data.videos) ? data.videos : [];
 }
 
-export function descargarArchivoSinRecarga(url) {
+
+export function descargarArchivoSinRecarga(url, filename = "") {
   const a = document.createElement('a');
   a.href = url;
-  a.download = '';
+  if (filename) {
+    a.download = filename;
+  } else {
+    a.download = "";
+  }
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+export function obtenerUrlDescarga(nombreArchivo) {
+  return `${BASE}/descargar?clip=${encodeURIComponent(nombreArchivo)}`;
 }
 
 export async function concatenarYDescargar(videos, canal) {
@@ -30,15 +39,39 @@ export async function concatenarYDescargar(videos, canal) {
     body: JSON.stringify({ videos, canal }),
   });
 
-  const data = await resp.json();
-  console.log("Respuesta de /concatenar:", data);
-
-  const nombreArchivo = data.archivo;
-  if (!nombreArchivo) {
-    alert("No se pudo generar el archivo. Respuesta del servidor: " + JSON.stringify(data));
-    return;
+  let data;
+  try {
+    data = await resp.json();
+  } catch (err) {
+    console.error("No se pudo parsear la respuesta de /concatenar", err);
+    data = null;
   }
 
-  console.log("Descargando archivo:", nombreArchivo);
-  descargarArchivoSinRecarga(`${BASE}/descargar?clip=${encodeURIComponent(nombreArchivo)}`);
+  if (!resp.ok) {
+    const mensaje = data && data.error ? data.error : `HTTP ${resp.status}`;
+    throw new Error(mensaje);
+  }
+
+  const nombreArchivo = data && data.archivo;
+  if (!nombreArchivo) {
+    throw new Error("La respuesta no incluyó el nombre del archivo generado");
+  }
+
+  console.log("Archivo concatenado generado:", nombreArchivo);
+  return nombreArchivo;
+}
+
+
+export async function obtenerTranscripcionClip(canal, timestampStart, timestampEnd) {
+  const params = new URLSearchParams({
+    canal,
+    timestamp_start: timestampStart,
+  });
+  if (timestampEnd) {
+    params.append("timestamp_end", timestampEnd);
+  }
+  const res = await fetch(`${BASE}/transcripcion?${params.toString()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data?.transcripcion ?? null;
 }

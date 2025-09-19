@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Query, Body
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 import subprocess
@@ -50,6 +51,13 @@ def obtener_lista_videos(canal: str = Query(..., min_length=1), timestamp_start:
     videos = transcripciones_handler.obtener_lista_videos_vecinos(canal, timestamp_start, timestamp_end)
     return {"videos": videos}
 
+
+@app.get("/transcripcion")
+def obtener_transcripcion(canal: str = Query(..., min_length=1), timestamp_start: str = Query(..., min_length=1), timestamp_end: Optional[str] = Query(None)):
+    transcripcion = transcripciones_handler.obtener_transcripcion_por_intervalo(canal, timestamp_start, timestamp_end)
+    if not transcripcion:
+        return JSONResponse(content={"error": "Transcripcion no encontrada"}, status_code=404)
+    return {"transcripcion": transcripcion}
 @app.get("/descargar")
 def descargar_clip(clip: str = Query(...)):
     output_path = os.path.join(OUTPUT_DIR, clip)
@@ -113,7 +121,16 @@ def concatenar_videos(canal: str = Body(..., embed=True), videos: list[str] = Bo
         output_path = os.path.abspath(output_file)
 
         list_path = os.path.abspath(list_file)
-        
+
+        print(f"Archivo de lista: {list_path}")
+        def leer_archivo(ruta):
+            print(f"Leyendo archivo: {ruta}")
+            with open(ruta, 'r', encoding='utf-8') as archivo:
+                contenido = archivo.read()
+                print(f"Contenido del archivo {ruta}:\n{contenido}")
+
+        leer_archivo(list_path)
+
         cmd = [
             "ffmpeg", "-y", "-f", "concat", "-safe", "0",
             "-i", list_path,

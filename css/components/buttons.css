@@ -1,15 +1,28 @@
 /* Botón base */
 button {
-  background: var(--primary);
-  border: none;
+  background: linear-gradient(145deg, #223758, #1a2942);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
 }
-button:hover { background: var(--primary-hover); }
-button:disabled { background: #555; cursor: not-allowed; }
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
+}
+button:active {
+  transform: scale(0.97);
+}
+button:disabled {
+  background: #3d3d3d;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 /* Grupo de botones (pares + labels) */
 .button-pairs {
@@ -34,14 +47,17 @@ button:disabled { background: #555; cursor: not-allowed; }
 
 /* Boton search */
 .btn-green {
-  background: var(--border);
-  background-color: rgb(22 163 74);
-  font-size: 1em;
-  padding: 8px 12px;
+  background: linear-gradient(145deg, #1f8a4c, #26b46a);
+  border: 1px solid rgba(35, 196, 118, 0.5);
+  font-size: 1rem;
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-weight: 600;
+  box-shadow: 0 14px 30px rgba(31, 138, 76, 0.28);
 }
 
 .btn-green:hover {
-  background-color: #15803D;
+  background: linear-gradient(145deg, #20a159, #2ccf7b);
 }
 
 /* Botones redondos */
@@ -59,13 +75,15 @@ button.round {
 
 /* Secundario (al hacer una nueva búsqueda) y variantes (añadir/quitar) */
 .btn-secondary {
-  background: var(--border);
+  background: rgba(34, 47, 68, 0.75);
   color: #fff;
   width: 100%;
   margin-top: 20px;
-  font-size: 0.9em;
+  font-size: 0.95em;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
-.btn-secondary:hover { background:  #15803D;}
+.btn-secondary:hover { background: rgba(51, 73, 112, 0.9);}
 
 button.add { background: var(--success); }
 button.add:hover { background: var(--success-hover); }

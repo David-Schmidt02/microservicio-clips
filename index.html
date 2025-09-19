@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Buscador de Transcripciones</title>
-  <!-- Un solo CSS que organiza capas e importa todo -->
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -11,64 +10,46 @@
   <div style="text-align:center;">
     <input type="text" id="busqueda" class="search-input" placeholder="Escribe una palabra...">
     <button class="btn-green" id="btnBuscar">Buscar</button>
-    <!-- Indicador de carga -->
     <div id="loading" class="loading" style="display:none;">
       <div class="spinner"></div>
       <div class="loading-text">Procesando...</div>
     </div>
   </div>
 
-  <!-- Resultados -->
   <div class="container" id="resultados"></div>
 
-  <!-- Reproductor y Transcripción -->
-  <div class="video-player-container" id="video-player" style="flex-direction: row; display: none;">
-    <div class="video-column">
-      <h3 id="video-title"></h3>
-      <video id="video" controls>
-        <source id="video-src" src="" type="video/mp4">
-        Tu navegador no soporta video HTML5.
-      </video>
-      
-      <!-- Controles de video - inicialmente ocultos -->
-      <div id="video-control-container" style="display:row;">
-        <!-- Controles para concatenar videos atrás y adelante -->
-      <!--  
-        <div class="video-controls button-pairs">
-          <div class="button-group">
-            <span class="button-label">Atrás:</span>
-            <div class="button-pair">
-              <button id="menosAtras" class="round remove">-</button>
-              <button id="masAtras" class="round add">+</button>
-            </div>
-          </div>
-          <div class="button-group">
-            <span class="button-label">Adelante:</span>
-            <div class="button-pair">
-              <button id="menosAdelante" class="round remove">-</button>
-              <button id="masAdelante" class="round add">+</button>
-            </div>
-          </div>
-        </div>
-      
-        <div style="text-align:center; margin-top:10px;">
-          <span id="contador">0 atrás | 0 adelante</span>
-        </div>
-      -->
-        <div class="video-controls">
-          <button class="btn-green" id="btnDescargar">Descargar clip concatenado</button>
-          <div id="download-status" style="display:none; margin-top:10px;"></div>
-        </div>
+  <div class="video-player-container" id="video-player" style="display: none;">
+    <aside class="related-column">
+      <div class="related-header">
+        <h3 class="related-title">Clips relacionados</h3>
+        <p class="related-subtitle">Selecciona un clip para centrar el contexto</p>
       </div>
+      <div class="related-stack" id="related-clips"></div>
+      <span class="related-counter" id="contador">0 atras | 0 adelante</span>
+    </aside>
+
+    <div class="player-main-column">
+      <section class="video-panel">
+        <h3 id="video-title"></h3>
+        <video id="video" controls>
+          <source id="video-src" src="" type="video/mp4">
+          Tu navegador no soporta video HTML5.
+        </video>
+
+        <div id="video-control-container" style="display:none;">
+          <div class="video-controls">
+            <button class="btn-green" id="btnDescargar">Descargar clip concatenado</button>
+            <div id="download-status" style="display:none; margin-top:10px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="transcription-column" id="selected-transcription"></section>
     </div>
-    
-    <!-- Columna para la transcripción seleccionada -->
-    <div class="transcription-column" id="selected-transcription"></div>
   </div>
 
   <div id="popup"></div>
 
-  <!-- Importamos el JS -->
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

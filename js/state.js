@@ -2,10 +2,11 @@
 export const state = {
   listaVideos: [],          // nombres de archivos en /videos
   videoActual: null,        // nombre de archivo seleccionado
-  canalActual: null,       // canal del video seleccionado
-  fecha: null,            // fecha del video seleccionado
+  canalActual: null,        // canal del video seleccionado
+  fecha: null,              // fecha del video seleccionado
   acumuladosAtras: 0,
   acumuladosAdelante: 0,
+  transcripcionesPorVideo: new Map(),
 };
 
 // Helpers
@@ -14,11 +15,33 @@ export function resetSeleccion() {
   state.acumuladosAdelante = 0;
 }
 
+
+export function limpiarTranscripciones() {
+  state.transcripcionesPorVideo.clear();
+}
+
+export function guardarTranscripcion(nombreArchivo, data) {
+  if (!nombreArchivo || !data) return;
+  state.transcripcionesPorVideo.set(nombreArchivo, data);
+}
+
+export function obtenerTranscripcion(nombreArchivo) {
+  if (!nombreArchivo) return null;
+  return state.transcripcionesPorVideo.get(nombreArchivo) || null;
+}
+
 export function setVideoActual(canal, start_timestamp, end_timestamp) {
-  const st_tm = formatearTimestamp(start_timestamp);
-  const en_tm = formatearTimestamp(end_timestamp);
-  const nombreArchivo = `${canal}_${st_tm}_${en_tm}.ts`;
+  const stTm = formatearTimestamp(start_timestamp);
+  const enTm = formatearTimestamp(end_timestamp);
+  const nombreArchivo = `${canal}_${stTm}_${enTm}.ts`;
   console.log("Seteando video actual a:", nombreArchivo);
+  state.videoActual = nombreArchivo;
+  resetSeleccion();
+}
+
+export function setVideoActualDesdeNombre(nombreArchivo) {
+  if (!nombreArchivo) return;
+  console.log("Seteando video actual manualmente a:", nombreArchivo);
   state.videoActual = nombreArchivo;
   resetSeleccion();
 }
@@ -30,7 +53,7 @@ export function setCanalActual(canal) {
 }
 
 export function setListaVideos(lista) {
-  state.listaVideos = lista;
+  state.listaVideos = Array.isArray(lista) ? lista : [];
   resetSeleccion();
 }
 
@@ -46,16 +69,15 @@ export function indiceActual() {
 }
 
 function formatearTimestamp(ts) {
-  ts = ts.replace('Z', '');
-  // Divide fecha y hora
-  const [fecha, hora] = ts.split('T');
-  // Quita los guiones de la fecha
+  if (typeof ts !== "string") return "";
+  const limpio = ts.replace('Z', '');
+  const [fecha, hora] = limpio.split('T');
+  if (!fecha || !hora) return limpio;
   const fechaSinGuiones = fecha.replace(/-/g, '');
-  // Quita los dos puntos de la hora
   const horaSinPuntos = hora.replace(/:/g, '');
   return `${fechaSinGuiones}_${horaSinPuntos}`;
 }
 
-// Ejemplo de uso:
-const ts = "2025-09-12T12:07:30Z";
-console.log(formatearTimestamp(ts)); // "20250912_120730"
+// Ejemplo simple para validar formato
+const ejemploTs = "2025-09-12T12:07:30Z";
+console.log(formatearTimestamp(ejemploTs)); // "20250912_120730"

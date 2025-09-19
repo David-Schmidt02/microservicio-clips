@@ -1,87 +1,182 @@
-import { state, setVideoActual, setListaVideos , resetSeleccion, indiceActual, setCanalActual, setFecha } from "./state.js";
-import { obtenerListaVideos, concatenarYDescargar } from "./api.js";
-import { mostrarCargando, mostrarPopup, formatTime, } from "./utils.js";
-import { getRefs, mostrarControles, ocultarReproductor, scrollToPlayer, renderTranscripcionSeleccionadaVideo, actualizarContador,
-  actualizarEstadoDescarga, deshabilitarBotonDescarga, setTituloPlayer } from "./ui.js";
+﻿import {
+  state,
+  setVideoActual,
+  setListaVideos,
+  indiceActual,
+  setCanalActual,
+  setFecha,
+  setVideoActualDesdeNombre,
+  limpiarTranscripciones,
+  guardarTranscripcion,
+  obtenerTranscripcion,
+} from "./state.js";
+import {
+  obtenerListaVideos,
+  concatenarYDescargar,
+  descargarArchivoSinRecarga,
+  obtenerUrlDescarga,
+  obtenerTranscripcionClip,
+} from "./api.js";
+import { mostrarCargando, mostrarPopup, extraerInfoVideo } from "./utils.js";
+import {
+  getRefs,
+  mostrarControles,
+  renderTranscripcionSeleccionadaVideo,
+  actualizarContador,
+  scrollToPlayer,
+  actualizarEstadoDescarga,
+  deshabilitarBotonDescarga,
+  setTituloPlayer,
+  renderClipsRelacionados,
+} from "./ui.js";
 
 const MAX_ADICIONALES = 3;
 
-// Carga perezosa de lista de videos ver cómo implementar a futuro
-async function ensureVideosCargados() {
-  if (state.listaVideos.length) return;
-  const vids = await obtenerListaVideos();
-  state.listaVideos = vids;
+function toggleClipAdyacente(offset, agregar) {
+  const lado = offset < 0 ? "atras" : "adelante";
+  expandir(agregar ? 1 : -1, lado);
 }
 
-// Configurar el reproductor con el video seleccionado
 function configurarReproductor(nombreArchivo) {
   const { videoElement, videoSrc } = getRefs();
+  if (!videoElement || !videoSrc) return;
+
   videoSrc.src = `./canales/${state.canalActual}/${nombreArchivo}`;
   videoElement.load();
 
   videoElement.onloadedmetadata = () => {
     videoElement.currentTime = 0;
     videoElement.play().catch(() => {
-      // Autoplay bloqueado: no es error grave
+      // El autoplay puede bloquearse; lo ignoramos.
     });
   };
+
   setTituloPlayer(nombreArchivo);
 }
 
-// Mostrar un resultado (abrir player + panel derecho)
-export async function mostrarVideo(transcripcion_resultado) {
-  const canal = transcripcion_resultado.canal;
-  const timestamp_start = transcripcion_resultado.start_timestamp;
-  const timestamp_end = transcripcion_resultado.end_timestamp;
-  const videos = await obtenerListaVideos(canal, timestamp_start, timestamp_end);
+function actualizarClipsRelacionados() {
+  renderClipsRelacionados(state.listaVideos, state.videoActual, seleccionarClipRelacionado, toggleClipAdyacente);
+}
 
+async function seleccionarClipRelacionado(nombreArchivo) {
+  if (!nombreArchivo || nombreArchivo === state.videoActual) return;
 
-  console.log("Videos obtenidos del servidor:", videos);
-  // Estado
-  setVideoActual(canal, timestamp_start, timestamp_end);
-  setCanalActual(canal);
-  setFecha(timestamp_start);
-  setListaVideos(videos);
-  resetSeleccion();
+  const infoClip = extraerInfoVideo(nombreArchivo);
+  const canal = infoClip.canal && infoClip.canal !== "Desconocido" ? infoClip.canal : state.canalActual;
+  const timestampInicio = infoClip.timestamp;
+  const timestampFin = infoClip.timestampFin;
 
-  console.log("state.listaVideos:", state.listaVideos);
-  console.log("state.videoActual:", state.videoActual);
-  console.log("includes?", state.listaVideos.includes(state.videoActual));
-
-  // Validar existencia
-  if (!state.listaVideos.includes(state.videoActual)) {
-    console.error(`Video ${state.videoActual} no existe en servidor`);
-    mostrarPopup("El video no existe en el servidor");
+  if (!canal || !timestampInicio || !timestampFin) {
+    mostrarPopup("No se pudo interpretar el clip seleccionado");
     return;
   }
 
-  // Limpiar resultados listados
-  const resultadosDiv = document.getElementById("resultados");
-  if (resultadosDiv) resultadosDiv.innerHTML = "";
+  mostrarCargando(true);
+  try {
+    const videos = await obtenerListaVideos(canal, timestampInicio, timestampFin);
+    if (!Array.isArray(videos) || !videos.length) {
+      mostrarPopup("No se encontraron videos para ese intervalo");
+      return;
+    }
 
-  // Player y panel
-  configurarReproductor(state.videoActual);
-  renderTranscripcionSeleccionadaVideo(transcripcion_resultado);
+    const listaOrdenada = videos.includes(nombreArchivo) ? [...videos] : [...videos, nombreArchivo];
+    listaOrdenada.sort();
 
-  // Mostrar controles y actualizar contador
-  mostrarControles();
-  //actualizarContador();
+    setCanalActual(canal);
+    setVideoActualDesdeNombre(nombreArchivo);
+    setFecha(timestampInicio);
+    setListaVideos(listaOrdenada);
 
-  scrollToPlayer();
+    configurarReproductor(nombreArchivo);
+
+    let transcripcion = obtenerTranscripcion(nombreArchivo);
+    if (!transcripcion) {
+      try {
+        transcripcion = await obtenerTranscripcionClip(canal, timestampInicio, timestampFin);
+        if (transcripcion) {
+          guardarTranscripcion(nombreArchivo, transcripcion);
+        }
+      } catch (error) {
+        console.error("No se pudo obtener la transcripcion del clip", error);
+      }
+    }
+
+    const datosTranscripcion = transcripcion || {
+      texto: `Clip seleccionado: ${infoClip.nombreCorto}`,
+      start_timestamp: timestampInicio,
+      end_timestamp: timestampFin,
+      canal,
+    };
+
+    renderTranscripcionSeleccionadaVideo(datosTranscripcion);
+    actualizarClipsRelacionados();
+    actualizarContador();
+    mostrarPopup("Clip central actualizado");
+  } catch (error) {
+    console.error("Error al actualizar clip", error);
+    mostrarPopup("No se pudo actualizar el clip seleccionado");
+  } finally {
+    mostrarCargando(false);
+  }
 }
 
-// Ajustar timeline del clip actual
+export async function mostrarVideo(transcripcionResultado) {
+  if (!transcripcionResultado) return;
+
+  const canal = transcripcionResultado.canal;
+  const timestampStart = transcripcionResultado.start_timestamp;
+  const timestampEnd = transcripcionResultado.end_timestamp;
+
+  try {
+    mostrarCargando(true);
+    limpiarTranscripciones();
+
+    const videos = await obtenerListaVideos(canal, timestampStart, timestampEnd);
+    if (!Array.isArray(videos) || !videos.length) {
+      mostrarPopup("No se encontraron videos relacionados");
+      return;
+    }
+
+    setCanalActual(canal);
+    setVideoActual(canal, timestampStart, timestampEnd);
+    setFecha(timestampStart);
+    setListaVideos(videos);
+
+    if (!state.listaVideos.includes(state.videoActual)) {
+      console.error(`Video ${state.videoActual} no existe en servidor`);
+      mostrarPopup("El video no existe en el servidor");
+      return;
+    }
+
+    guardarTranscripcion(state.videoActual, transcripcionResultado);
+
+    const resultadosDiv = document.getElementById("resultados");
+    if (resultadosDiv) resultadosDiv.innerHTML = "";
+
+    configurarReproductor(state.videoActual);
+    renderTranscripcionSeleccionadaVideo(transcripcionResultado);
+    actualizarClipsRelacionados();
+    actualizarContador();
+    mostrarControles();
+    scrollToPlayer();
+  } catch (error) {
+    console.error("Error al cargar video", error);
+    mostrarPopup("No se pudo cargar el clip");
+  } finally {
+    mostrarCargando(false);
+  }
+}
+
 export function ajustarClip(segundos) {
   const { videoElement } = getRefs();
   if (!videoElement) return;
   videoElement.currentTime += segundos;
 }
 
-// Expandir/quitar selección de videos
 export function expandir(direccion, lado) {
   const idx = indiceActual();
   if (idx === -1) {
-    mostrarPopup("Error: Video no encontrado");
+    mostrarPopup("Error: video no encontrado");
     return;
   }
 
@@ -91,34 +186,32 @@ export function expandir(direccion, lado) {
 
   if (direccion === 1) {
     const seleccionados = esAtras ? state.acumuladosAtras : state.acumuladosAdelante;
-    const maximoPosible = Math.min(
-      MAX_ADICIONALES,
-      esAtras ? disponiblesAtras : disponiblesAdelante
-    );
+    const maximoPosible = Math.min(MAX_ADICIONALES, esAtras ? disponiblesAtras : disponiblesAdelante);
 
     if (seleccionados < maximoPosible) {
       if (esAtras) state.acumuladosAtras++;
       else state.acumuladosAdelante++;
-      mostrarPopup(`Se agregó un video ${lado}`);
+      mostrarPopup(`Se agrego un video ${lado}`);
     } else if (seleccionados >= MAX_ADICIONALES) {
-      mostrarPopup(`Máximo ${MAX_ADICIONALES} videos ${lado}`);
+      mostrarPopup(`Maximo ${MAX_ADICIONALES} videos ${lado}`);
     } else {
-      mostrarPopup(`No hay más videos ${lado}`);
+      mostrarPopup(`No hay mas videos ${lado}`);
     }
   } else {
-    if (esAtras ? state.acumuladosAtras > 0 : state.acumuladosAdelante > 0) {
+    const haySeleccionados = esAtras ? state.acumuladosAtras > 0 : state.acumuladosAdelante > 0;
+    if (haySeleccionados) {
       if (esAtras) state.acumuladosAtras--;
       else state.acumuladosAdelante--;
-      mostrarPopup(`Se quitó un video ${lado}`);
+      mostrarPopup(`Se quito un video ${lado}`);
     } else {
-      mostrarPopup(`No hay más videos ${lado}`);
+      mostrarPopup(`No hay mas videos ${lado}`);
     }
   }
 
   actualizarContador();
+  actualizarClipsRelacionados();
 }
 
-// Descargar concatenado
 export async function descargarConcatenado() {
   if (!state.videoActual) {
     mostrarPopup("No hay video seleccionado");
@@ -131,60 +224,46 @@ export async function descargarConcatenado() {
     return;
   }
 
-  // Selección
   const inicio = Math.max(0, idx - state.acumuladosAtras);
   const fin = Math.min(state.listaVideos.length - 1, idx + state.acumuladosAdelante);
   const seleccion = state.listaVideos.slice(inicio, fin + 1);
+
   if (seleccion.length === 0) {
     mostrarPopup("No hay videos para concatenar");
     return;
   }
 
-  // UI
   mostrarCargando(true);
   actualizarEstadoDescarga("Concatenando videos...", "normal");
   deshabilitarBotonDescarga(true, "Procesando...");
   mostrarPopup(`Procesando ${seleccion.length} videos...`);
+
   const btn = document.getElementById("btnDescargar");
-  const textoOriginal = btn.textContent;
+  const textoOriginal = btn ? btn.textContent : "Descargar";
+  let descargaExitosa = false;
 
   try {
-    const res = await concatenarYDescargar(seleccion, state.canalActual);
-
-    mostrarCargando(false);
-    deshabilitarBotonDescarga(false, textoOriginal);
-
-    if (!res.ok) {
-      actualizarEstadoDescarga("Error en la concatenación", "error");
-      mostrarPopup(`Error al generar clip: ${res.status} ${res.statusText}`);
-      return;
-    }
+    const nombreArchivo = await concatenarYDescargar(seleccion, state.canalActual);
 
     actualizarEstadoDescarga("Descargando archivo...", "normal");
-
-    // Descargar
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
-    a.href = url;
-    a.download = "clip_concatenado.mp4";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const urlDescarga = `${obtenerUrlDescarga(nombreArchivo)}&ts=${Date.now()}`;
+    descargarArchivoSinRecarga(urlDescarga, nombreArchivo);
 
     mostrarPopup("Descarga iniciada");
     actualizarEstadoDescarga("Descarga completada", "success");
+    descargaExitosa = true;
     setTimeout(() => {
       const ds = document.getElementById("download-status");
       if (ds) ds.style.display = "none";
     }, 5000);
   } catch (e) {
-    mostrarCargando(false);
-    deshabilitarBotonDescarga(false, textoOriginal);
-    mostrarPopup("Error en la descarga");
-    actualizarEstadoDescarga("Error en la descarga", "error");
+    const mensajeError = e instanceof Error ? e.message : "Error en la descarga";
+    mostrarPopup(`Error al generar clip: ${mensajeError}`);
+    actualizarEstadoDescarga(mensajeError, "error");
     console.error(e);
+  } finally {
+    mostrarCargando(false);
+    deshabilitarBotonDescarga(false, descargaExitosa ? "Procesado" : textoOriginal);
   }
 }
+

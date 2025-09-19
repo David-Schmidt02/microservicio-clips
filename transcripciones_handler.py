@@ -1,6 +1,7 @@
 from transcripciones_mock import objetos_transcripciones
 import os
 from datetime import datetime
+from typing import Optional
 
 class TranscripcionesHandler:
     def __init__(self):
@@ -17,6 +18,22 @@ class TranscripcionesHandler:
     # Ejemplo de nombre de clip: "a24_20250905_234106_20250905_234236.ts"
     # Timestamp inicial, timestamp final
     # Canal: a24
+
+    def obtener_transcripcion_por_intervalo(self, canal: str, timestamp_start: str, timestamp_end: Optional[str] = None):
+        for transcripcion in self.transcripciones:
+            if transcripcion.canal != canal:
+                continue
+            if transcripcion.start_timestamp != timestamp_start:
+                continue
+            if timestamp_end and transcripcion.end_timestamp != timestamp_end:
+                continue
+            return {
+                "canal": transcripcion.canal,
+                "texto": transcripcion.texto,
+                "start_timestamp": transcripcion.start_timestamp,
+                "end_timestamp": transcripcion.end_timestamp,
+            }
+        return None
 
     def obtener_lista_videos_vecinos(self, carpeta_canal, timestamp_start_format, timestamp_end_format, rango=3):
         print(f"Buscando en canal: {carpeta_canal}, timestamp_start: {timestamp_start_format}, timestamp_end: {timestamp_end_format}")
