@@ -1,61 +1,58 @@
-/* Cajas de canal + lista de transcripciones por canal */
+@import '../settings/variables.css';
 
-.channel-box {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 12px;
+.related-clip-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--text-high);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.2s ease;
 }
 
-.channel-box h3 {
-  text-align: center;
-  margin: 6px 0 12px;
-  color: #fff;
+.related-clip-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.45);
+  background: rgba(30, 41, 59, 0.88);
 }
 
-/* Caja de cada transcripción individual */
-.transcription-box {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-xsm);
-  padding: 12px;
+.related-clip-card.is-active {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(37, 99, 235, 0.25);
 }
 
-.transcription-box:hover {
-  border: 1.5px solid var(--primary);
-  background: #2b3a2d;
+.related-clip-card.is-selected {
+  border-color: rgba(52, 211, 153, 0.55);
 }
 
-.transcription-box h4 {
-  text-align: center;
-  margin: 6px 0 12px;
-  color: #fff;
+.related-clip-offset {
+  min-width: 64px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.8);
 }
 
-.transcriptions-list {
+.related-clip-info {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.2rem;
 }
 
-/* Reutilizamos el look de .channel-box para items de canal */
-.transcriptions-list .item {
-  background: var(--surface-2);
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s, border 0.2s;
-  border: 1px solid var(--border);
-  text-align: left;
-}
-.transcriptions-list .item:hover {
-  background: #2b3a2d;
-  border-color: var(--primary);
+.related-clip-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.95);
 }
 
-.item .time {
-  font-size: 0.85em;
-  color: var(--muted);
-  display: block;
-  margin-bottom: 6px;
+.related-clip-meta {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }

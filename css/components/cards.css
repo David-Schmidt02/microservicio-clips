@@ -1,36 +1,74 @@
-/* Tarjeta genérica de transcripción */
+@import '../settings/variables.css';
+
 .channel-box {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.2s, border 0.2s;
-  width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+  padding: 1.6rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  background: var(--surface-glass-strong);
+  box-shadow: var(--shadow-lg);
+  transition: border-color 0.28s ease, transform 0.28s ease;
 }
 
-/*
 .channel-box:hover {
-  border: 1.5px solid var(--primary);
-  background: #2b3a2d;
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.45);
 }
-*/
 
 .channel-title {
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 10px;
-  font-size: 1em;
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.transcription-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(71, 85, 105, 0.55);
+  background: rgba(15, 23, 42, 0.78);
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.transcription-box:hover {
+  transform: translateY(-2px);
+  border-color: rgba(96, 165, 250, 0.55);
+  background: rgba(30, 41, 59, 0.85);
 }
 
 .transcription-text {
-  color: var(--text);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--text-high);
+}
+
+.status-block {
+  display: none;
+  border-radius: 0.9rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  font-size: 0.92rem;
   line-height: 1.5;
-  flex: 1;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* uniformar altura visual */
-  -webkit-box-orient: vertical;
+}
+
+.status-block.visible {
+  display: block;
+}
+
+.status-block.status-info {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #bbf7d0;
+}
+
+.status-block.status-warning {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
 }

@@ -1,10 +1,25 @@
-from transcripciones_mock import objetos_transcripciones
 import os
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timedelta, timezone
 from elasticsearch import Elasticsearch
 
 from config import ELASTIC_PASSWORD, ELASTIC_URL, ELASTIC_USER
+
+
+def _parse_timestamp(value: str) -> datetime:
+    if not value:
+        raise ValueError("Timestamp vacío")
+    normalized = value.replace('Z', '+00:00') if value.endswith('Z') else value
+    dt = datetime.fromisoformat(normalized)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _format_timestamp_for_query(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    iso = dt.isoformat()
+    return iso.replace('+00:00', 'Z')
 
 class ElasticSearchController:
 
@@ -12,7 +27,11 @@ class ElasticSearchController:
         self.es = Elasticsearch(
             ELASTIC_URL,
             basic_auth=(ELASTIC_USER, ELASTIC_PASSWORD),
-            verify_certs=False
+            verify_certs=False,
+            headers={
+                "accept": "application/vnd.elasticsearch+json; compatible-with=8",
+                "content-type": "application/vnd.elasticsearch+json; compatible-with=8"
+            }
         )
 
     def obtener_transcripciones(self, palabra: str):
@@ -85,11 +104,10 @@ class ElasticSearchController:
         return mapeados
     
     def obtener_transcripciones_por_clip(self, canal: str, timestamp: str, duracion_segundos: int = 90):
-        from datetime import datetime, timedelta
-        t0 = datetime.fromisoformat(timestamp.replace('Z', '').replace('+00:00', ''))
+        t0 = _parse_timestamp(timestamp)
         t1 = t0 + timedelta(seconds=duracion_segundos)
-        ts_inicio = t0.isoformat()
-        ts_fin = t1.isoformat()
+        ts_inicio = _format_timestamp_for_query(t0)
+        ts_fin = _format_timestamp_for_query(t1)
         body = {
             "query": {
                 "bool": {
@@ -109,7 +127,6 @@ class ElasticSearchController:
 
 class TranscripcionesHandler:
     def __init__(self):
-        self.transcripciones = objetos_transcripciones
         self.elastic_search = ElasticSearchController()
 
     def get_transcripciones(self, palabra: str):
@@ -145,12 +162,8 @@ class TranscripcionesHandler:
         return archivos[start_idx:end_idx]
 
     def formatear_timestamp(self, ts):
-        # Si termina con Z, usa el formato original
-        if ts.endswith('Z'):
-            dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
-        else:
-            # Elimina microsegundos y zona horaria si existen
-            dt = datetime.fromisoformat(ts.replace('Z', '').replace('+00:00', ''))
+        """Convierte un timestamp ISO 8601 (con zona horaria) al formato usado en los nombres de archivo."""
+        dt = _parse_timestamp(ts)
         return dt.strftime("%Y%m%d_%H%M%S")
 
     def imprimir_archivos(archivos):

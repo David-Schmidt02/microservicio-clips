@@ -1,0 +1,39 @@
+:root {
+  --scrollbar-width: 8px;
+  --scrollbar-track: #1e293b;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #60a5fa;
+
+  --surface-dark: #0f172a;
+  --surface-darker: #111827;
+  --surface-highlight: #1f2937;
+  --surface-glass: rgba(15, 23, 42, 0.82);
+  --surface-glass-strong: rgba(15, 23, 42, 0.9);
+  --surface-stroke: rgba(148, 163, 184, 0.15);
+  --surface-stroke-strong: rgba(71, 85, 105, 0.55);
+
+  --status-online: #22c55e;
+  --status-waiting: #f59e0b;
+  --status-offline: #ef4444;
+
+  --accent-primary: #3b82f6;
+  --accent-primary-strong: #2563eb;
+  --accent-secondary: #38bdf8;
+  --accent-muted: rgba(148, 163, 184, 0.9);
+
+  --text-high: #f8fafc;
+  --text-medium: rgba(148, 163, 184, 0.9);
+  --text-muted: rgba(148, 163, 184, 0.7);
+  --text-low: rgba(148, 163, 184, 0.55);
+
+  --shadow-xl: 0 28px 70px rgba(8, 15, 30, 0.55);
+  --shadow-lg: 0 18px 45px rgba(8, 15, 30, 0.45);
+  --shadow-md: 0 14px 32px rgba(8, 15, 30, 0.38);
+
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+
+  --app-gradient: linear-gradient(180deg, var(--surface-darker) 0%, var(--surface-dark) 45%, var(--surface-highlight) 100%);
+  --font-family-base: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
