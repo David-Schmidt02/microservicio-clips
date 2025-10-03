@@ -99,14 +99,62 @@ export function mostrarTranscripcionSeleccionadaCompleta(transcripcion, mostrarV
 
   const title = document.createElement("div");
   title.className = "modal-title";
-  title.textContent = "Transcripcion completa";
+  title.textContent = "Transcripción completa";
+
+  // Info adicional del modal
+  const infoBox = document.createElement("div");
+  infoBox.className = "modal-info";
+  // Canal
+  const canalInfo = document.createElement("div");
+  canalInfo.className = "modal-canal";
+  canalInfo.textContent = `Canal: ${transcripcion.canal || "Desconocido"}`;
+  // Horario
+  const horarioInfo = document.createElement("div");
+  horarioInfo.className = "modal-horario";
+  // Formatear fecha si es posible
+  let fechaStr = transcripcion.timestamp;
+  try {
+    if (fechaStr) {
+      const dt = new Date(fechaStr);
+      fechaStr = dt.toLocaleString();
+    }
+  } catch {}
+  horarioInfo.textContent = `Horario: ${fechaStr || "-"}`;
+  // Video ID (si existe)
+  const videoIdInfo = document.createElement("div");
+  videoIdInfo.className = "modal-videoid";
+  if (transcripcion.video_id) {
+    videoIdInfo.textContent = `Video ID: ${transcripcion.video_id}`;
+    infoBox.appendChild(videoIdInfo);
+  }
+  infoBox.appendChild(canalInfo);
+  infoBox.appendChild(horarioInfo);
 
   const scrollBox = document.createElement("div");
   scrollBox.className = "modal-scroll";
   const text = document.createElement("div");
   text.className = "modal-text";
-  text.textContent = transcripcion.texto;
+  text.textContent = "Cargando transcripciones...";
   scrollBox.appendChild(text);
+
+  // Nueva lógica: hit a obtenerTranscripcionClip con duración corta
+  (async () => {
+    try {
+      // Import dinámico para evitar dependencias circulares
+      const api = await import("./api.js");
+      const canal = transcripcion.canal;
+      const timestamp = transcripcion.timestamp;
+      // Duración corta (30 segundos)
+      const res = await api.obtenerTranscripcionClip(canal, timestamp, 30);
+      if (res && res.texto) {
+        text.textContent = res.texto;
+      } else {
+        text.textContent = transcripcion.texto || "Sin transcripciones en el rango";
+      }
+    } catch (err) {
+      text.textContent = "Error al cargar transcripciones";
+    }
+  })();
 
   const btnVerVideo = document.createElement("button");
   btnVerVideo.className = "modal-action";

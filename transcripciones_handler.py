@@ -41,6 +41,9 @@ class ElasticSearchController:
                 }
             }
         }
+        # Agregar sort por @timestamp ascendente en todas las búsquedas
+        if "sort" not in body:
+            body["sort"] = [{"@timestamp": {"order": "asc"}}]
         resultados = self.es.search(index="streaming_tv", body=body)
         buckets = resultados.get("aggregations", {}).get("por_canal", {}).get("buckets", [])
         hits_filtrados = []
@@ -87,15 +90,20 @@ class ElasticSearchController:
         t1 = t0 + timedelta(seconds=duracion_segundos)
         ts_inicio = t0.isoformat()
         ts_fin = t1.isoformat()
-        query = {
-            "bool": {
-                "must": [
-                    {"match": {"slug": canal}},
-                    {"range": {"@timestamp": {"gte": ts_inicio, "lt": ts_fin}}}
-                ]
-            }
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"slug": canal}},
+                        {"range": {"@timestamp": {"gte": ts_inicio, "lt": ts_fin}}}
+                    ]
+                }
+            },
+            "sort": [
+                {"@timestamp": {"order": "asc"}}
+            ]
         }
-        resultados = self.es.search(index="streaming_tv", body={"query": query})
+        resultados = self.es.search(index="streaming_tv", body=body)
         return self.mapear_resultados(resultados)
     
 
