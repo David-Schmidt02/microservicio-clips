@@ -1,0 +1,64 @@
+@import '../settings/variables.css';
+
+.app-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-stroke);
+  background: rgba(15, 23, 42, 0.85);
+  box-shadow: var(--shadow-xl);
+}
+
+.app-hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1 1 320px;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(56, 189, 248, 0.65);
+}
+
+.headline {
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  margin: 0;
+  color: #ffffff;
+}
+
+.lead {
+  margin: 0;
+  max-width: 560px;
+  color: var(--text-medium);
+  line-height: 1.65;
+}
+
+.search-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 2.25rem;
+  border-radius: 26px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.78);
+  box-shadow: var(--shadow-xl);
+}
+
+.search-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.search-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}

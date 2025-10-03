@@ -1,13 +1,21 @@
+@import '../settings/variables.css';
+
 #popup {
   position: fixed;
-  bottom: 10px;
-  left: 10px;
-  background: #333;
-  color: #fff;
-  padding: 10px 15px;
-  border-radius: var(--radius-sm);
+  bottom: 2rem;
+  right: 2rem;
   display: none;
-  font-size: 0.9em;
-  animation: fadein 0.5s;
-  z-index: 1000;
+  padding: 0.85rem 1.2rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-lg);
+  z-index: 1200;
+}
+
+#popup.show {
+  display: block;
+  animation: fadeIn 0.35s ease-out;
 }

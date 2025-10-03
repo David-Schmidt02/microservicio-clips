@@ -42,12 +42,23 @@ export function getRefs() {
 // Render de resultados simples (tarjetas sueltas)
 export function renderResultados(resultados, onClickVideo) {
   const cont = document.getElementById("resultados");
+  const empty = document.getElementById("empty-state");
   if (!cont) return;
   cont.innerHTML = "";
 
   if (!Array.isArray(resultados) || resultados.length === 0) {
-    cont.innerHTML = "<p style='text-align:center'>No se encontraron resultados</p>";
+    if (empty) {
+      const title = empty.querySelector(".empty-state__title");
+      const subtitle = empty.querySelector(".empty-state__subtitle");
+      if (title) title.textContent = "Sin coincidencias";
+      if (subtitle) subtitle.textContent = "Intenta con otra palabra clave o revisa la ortografía.";
+      empty.classList.remove("hidden");
+    }
     return;
+  }
+
+  if (empty) {
+    empty.classList.add("hidden");
   }
 
   const canales = Array.from(new Set(resultados.map(r => r.canal)));

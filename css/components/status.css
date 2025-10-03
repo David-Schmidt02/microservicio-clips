@@ -1,6 +1,49 @@
-.status {
-  text-align: center;
-  margin: 10px;
-  color: var(--muted);
-  font-size: 0.95em;
+@import '../settings/variables.css';
+
+.connection-state {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+}
+
+.status-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--status-waiting);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.status-indicator[data-status='connecting'] {
+  background: var(--status-waiting);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.status-indicator[data-status='connected'] {
+  background: var(--status-online);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+
+.status-indicator[data-status='disconnected'] {
+  background: var(--status-offline);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.28);
+}
+
+.connection-state__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.connection-state__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.connection-state__subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }

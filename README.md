@@ -51,11 +51,14 @@ microservicio-clips/
 │   │   ├── modal.css
 │   │   ├── player.css
 │   │   ├── popup.css
+│   │   ├── search.css
 │   │   └── status.css
 │   ├── layout/
 │   │   └── layout.css
+│   ├── pages/
+│   │   └── search.css
 │   ├── settings/
-│   │   └── tokens.css
+│   │   └── variables.css
 │   └── utilities/
 │       └── animations.css
 │
@@ -79,6 +82,7 @@ microservicio-clips/
 - **base/**: Estilos base y resets.
 - **components/**: Estilos de componentes reutilizables (botones, tarjetas, modales, reproductor, etc).
 - **layout/**: Estilos de estructura y disposición general.
+- **pages/**: Estilos específicos por página.
 - **settings/**: Variables CSS y tokens de diseño.
 - **utilities/**: Utilidades y animaciones.
 

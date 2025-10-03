@@ -1,7 +1,13 @@
 // UI helpers
 export function mostrarCargando(mostrar) {
   const el = document.getElementById("loading");
-  if (el) el.style.display = mostrar ? "flex" : "none";
+  if (!el) return;
+  el.classList.toggle("hidden", !mostrar);
+  if (mostrar) {
+    el.setAttribute("aria-busy", "true");
+  } else {
+    el.removeAttribute("aria-busy");
+  }
 }
 
 export function mostrarPopup(mensaje) {
@@ -12,9 +18,11 @@ export function mostrarPopup(mensaje) {
     return;
   }
   popup.textContent = mensaje;
-  popup.style.display = "block";
+  popup.classList.add("show");
   if (popup.timeoutId) clearTimeout(popup.timeoutId);
-  popup.timeoutId = setTimeout(() => { popup.style.display = "none"; }, 3000);
+  popup.timeoutId = setTimeout(() => {
+    popup.classList.remove("show");
+  }, 3000);
 }
 
 export function formatTime(seconds) {
@@ -140,6 +148,7 @@ function crearTimestampIso(yyyymmdd, hhmmss) {
 function normalizarIso(ts) {
   if (typeof ts !== "string" || !ts) return null;
   if (ts.endsWith("Z")) return ts;
+  if (/[+-]\d{2}:\d{2}$/.test(ts)) return ts;
   return `${ts}Z`;
 }
 
