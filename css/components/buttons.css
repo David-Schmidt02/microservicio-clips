@@ -1,107 +1,120 @@
-/* Botón base */
-button {
-  background: linear-gradient(145deg, #223758, #1a2942);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-}
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
-}
-button:active {
-  transform: scale(0.97);
-}
-button:disabled {
-  background: #3d3d3d;
-  cursor: not-allowed;
-  box-shadow: none;
-}
+@import '../settings/variables.css';
 
-/* Grupo de botones (pares + labels) */
-.button-pairs {
-  margin-top: 30px;
-  margin-bottom: 20px;
-}
-.button-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 15px;
-}
-.button-label {
-  margin-bottom: 8px;
-  color: var(--text);
-  font-size: 0.9em;
-}
-.button-pair {
-  display: flex;
-  gap: 10px;
-}
-
-/* Boton search */
+.button,
 .btn-green {
-  background: linear-gradient(145deg, #1f8a4c, #26b46a);
-  border: 1px solid rgba(35, 196, 118, 0.5);
-  font-size: 1rem;
-  padding: 10px 20px;
-  border-radius: 14px;
-  font-weight: 600;
-  box-shadow: 0 14px 30px rgba(31, 138, 76, 0.28);
-}
-
-.btn-green:hover {
-  background: linear-gradient(145deg, #20a159, #2ccf7b);
-}
-
-/* Botones redondos */
-button.round {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.2em;
-  font-weight: bold;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 0.5rem;
+  border-radius: 0.9rem;
+  padding: 0.65rem 1.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(37, 99, 235, 0.18);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  color: #e0f2fe;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
 }
 
-/* Secundario (al hacer una nueva búsqueda) y variantes (añadir/quitar) */
+.button:hover,
+.btn-green:hover {
+  background: rgba(37, 99, 235, 0.3);
+  border-color: rgba(147, 197, 253, 0.6);
+  transform: translateY(-1px);
+}
+
+.button:active,
+.btn-green:active {
+  transform: translateY(0);
+}
+
+.button:disabled,
+.btn-green:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.button--primary,
+.btn-green {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.75), rgba(59, 130, 246, 0.65));
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #f8fafc;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.28);
+}
+
+.button--primary:hover,
+.btn-green:hover {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.85), rgba(59, 130, 246, 0.8));
+}
+
+.button--ghost {
+  background: rgba(17, 24, 39, 0.65);
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #e2e8f0;
+}
+
+.button--ghost:hover {
+  background: rgba(30, 41, 59, 0.75);
+  border-color: rgba(45, 212, 191, 0.45);
+}
+
 .btn-secondary {
-  background: rgba(34, 47, 68, 0.75);
-  color: #fff;
   width: 100%;
-  margin-top: 20px;
-  font-size: 0.95em;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+  margin-top: 1.5rem;
+  border-radius: 0.9rem;
+  padding: 0.65rem 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(17, 24, 39, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
 }
-.btn-secondary:hover { background: rgba(51, 73, 112, 0.9);}
 
-button.add { background: var(--success); }
-button.add:hover { background: var(--success-hover); }
+.btn-secondary:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(96, 165, 250, 0.45);
+  transform: translateY(-1px);
+}
 
-button.remove { background: var(--danger); }
-button.remove:hover { background: var(--danger-hover); }
-
-/* Barra de búsqueda superior */
-.search-bar {
-  display: flex;
+.related-clip-action {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e0f2fe;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  margin: 20px;
-  gap: 10px;
-}
-.search-bar input {
-  padding: 8px 12px;
-  border-radius: 20px;
-  border: none;
-  max-width: 300px;
+  margin-left: auto;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
+.related-clip-action:hover {
+  transform: translateY(-1px);
+}
+
+.related-clip-action--add {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #bbf7d0;
+}
+
+.related-clip-action--add:hover {
+  background: rgba(34, 197, 94, 0.3);
+}
+
+.related-clip-action--remove {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fecaca;
+}
+
+.related-clip-action--remove:hover {
+  background: rgba(239, 68, 68, 0.3);
+}

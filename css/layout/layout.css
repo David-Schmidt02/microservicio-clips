@@ -1,27 +1,194 @@
-/* Contenedores y grillas generales de la página */
+@import '../settings/variables.css';
 
-.container {
+.page-shell {
+  min-height: 100vh;
+  padding: 3rem 1.5rem 4rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .page-shell {
+    padding: 4rem 2.75rem 5rem;
+  }
+}
+
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 30px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 2.5rem;
 }
 
-/* Rejilla uniforme para los resultados (tarjetas sueltas) */
-#resultados {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-  align-items: stretch;
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(191, 219, 254, 0.95);
 }
 
-/* Resultados agrupados por canal */
-.channels-container, /* si en algún momento lo usás como wrapper */
-.channel-grid,       /* alias por si cambiás el id */
-#resultados.channel-grid {
+.section-description {
+  color: var(--text-medium);
+  line-height: 1.6;
+}
+
+.results-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-  margin: 20px;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .results-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.video-player-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2.5rem;
+  border-radius: 26px;
+  border: 1px solid var(--surface-stroke);
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: var(--shadow-xl);
+}
+
+@media (min-width: 1024px) {
+  .video-player-container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.related-column {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.player-main-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.video-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border-radius: 22px;
+  border: 1px solid rgba(71, 85, 105, 0.35);
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: var(--shadow-lg);
+}
+
+.video-panel h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.video-panel video {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  background: #000;
+  box-shadow: var(--shadow-md);
+}
+
+.transcription-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border-radius: 22px;
+  border: 1px solid rgba(71, 85, 105, 0.35);
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: var(--shadow-lg);
+}
+
+.selected-transcription-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--text-high);
+}
+
+.selected-transcription-summary,
+.selected-transcription-info {
+  color: var(--text-medium);
+  line-height: 1.5;
+}
+
+.selected-channel-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(191, 219, 254, 0.9);
+}
+
+.related-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.related-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.related-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.related-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.related-counter {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  border-radius: 1.5rem;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  color: var(--text-medium);
+}
+
+.empty-state__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.empty-state__subtitle {
+  max-width: 480px;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.6;
 }
