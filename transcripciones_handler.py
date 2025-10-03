@@ -7,50 +7,65 @@ from elasticsearch import Elasticsearch
 from config import ELASTIC_PASSWORD, ELASTIC_URL, ELASTIC_USER
 
 class ElasticSearchController:
-    def obtener_transcripciones_por_canal_intervalo(self, canal, timestamp, duracion_segundos=90):
-        """
-        Consulta ES filtrando por canal y por rango de timestamp.
-        """
-        from datetime import datetime, timedelta
-        try:
-            t0 = datetime.fromisoformat(timestamp.replace('Z', '').replace('+00:00', ''))
-        except Exception:
-            return []
-        t1 = t0 + timedelta(seconds=duracion_segundos)
-        # Formato ISO para ES
-        ts_inicio = t0.isoformat()
-        ts_fin = t1.isoformat()
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {"match": {"slug": canal}},
-                        {"range": {"@timestamp": {"gte": ts_inicio, "lt": ts_fin}}}
-                    ]
-                }
-            }
-        }
-        resultados = self.es.search(index="streaming_tv", body=body)
-        return self.mapear_resultados(resultados)
+
     def __init__(self):
         self.es = Elasticsearch(
             ELASTIC_URL,
             basic_auth=(ELASTIC_USER, ELASTIC_PASSWORD),
             verify_certs=False
         )
+
     def obtener_transcripciones(self, palabra: str):
-        resultados = self.es.search(index="streaming_tv", body={
+        # Usar agregaciones para obtener hasta 10 resultados por canal
+        # body = body_buscar
+        body = {
+            "size": 0,  # No queremos hits directos, solo agregaciones
             "query": {
                 "match": {
                     "text": palabra
                 }
+            },
+            "aggs": {
+                "por_canal": {
+                    "terms": {"field": "slug.keyword", "size": 50},
+                    "aggs": {
+                        "top_transcripciones": {
+                            "top_hits": {
+                                "size": 10,
+                                "sort": [
+                                    {"@timestamp": {"order": "asc"}}
+                                ]
+                            }
+                        }
+                    }
+                }
             }
-        })
-        hits = resultados.get("hits", {}).get("hits", [])
+        }
+        resultados = self.es.search(index="streaming_tv", body=body)
+        buckets = resultados.get("aggregations", {}).get("por_canal", {}).get("buckets", [])
+        hits_filtrados = []
+        for bucket in buckets:
+            top_hits = bucket.get("top_transcripciones", {}).get("hits", {}).get("hits", [])
+            hits_filtrados.extend(top_hits)
         # Mapeo para frontend: solo campos relevantes
-        mapeados = self.mapear_resultados(resultados)
+        resultados_filtrados = {"hits": {"hits": hits_filtrados}}
+        mapeados = self.mapear_resultados(resultados_filtrados)
         return mapeados
     
+    def _agrupar_por_canal(self, hits):
+        canales = {}
+        hits_filtrados = []
+        for hit in hits:
+            src = hit.get("_source", {})
+            canal = src.get("slug", "")
+            if canal not in canales:
+                canales[canal] = []
+            if len(canales[canal]) < 10:
+                canales[canal].append(hit)
+        for lista in canales.values():
+            hits_filtrados.extend(lista)
+        return hits_filtrados
+
     def mapear_resultados(self, resultados):
         # Mapeo para frontend: solo campos relevantes
         mapeados = []
@@ -82,6 +97,7 @@ class ElasticSearchController:
         }
         resultados = self.es.search(index="streaming_tv", body={"query": query})
         return self.mapear_resultados(resultados)
+    
 
 class TranscripcionesHandler:
     def __init__(self):
@@ -96,7 +112,7 @@ class TranscripcionesHandler:
         """
         Devuelve un solo string concatenado con los textos de todas las transcripciones de ES cuyo '@timestamp' esté en el rango [timestamp, timestamp + duracion_segundos] y canal coincida.
         """
-        transcripciones = self.elastic_search.obtener_transcripciones_por_canal_intervalo(canal, timestamp, duracion_segundos)
+        transcripciones = self.elastic_search.obtener_transcripciones_por_clip(canal, timestamp, duracion_segundos)
         texto_concatenado = " ".join([t["texto"] for t in transcripciones if t.get("texto")])
         # Devuelve el formato esperado por el frontend
         return {
