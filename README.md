@@ -70,7 +70,6 @@ microservicio-clips/
 │   ├── ui.js
 │   └── utils.js
 │
-└── transcripciones_mock.py
 ```
 
 ---

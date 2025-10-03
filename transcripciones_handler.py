@@ -1,4 +1,3 @@
-from transcripciones_mock import objetos_transcripciones
 import os
 from datetime import datetime, timedelta, timezone
 from elasticsearch import Elasticsearch
@@ -28,7 +27,11 @@ class ElasticSearchController:
         self.es = Elasticsearch(
             ELASTIC_URL,
             basic_auth=(ELASTIC_USER, ELASTIC_PASSWORD),
-            verify_certs=False
+            verify_certs=False,
+            headers={
+                "accept": "application/vnd.elasticsearch+json; compatible-with=8",
+                "content-type": "application/vnd.elasticsearch+json; compatible-with=8"
+            }
         )
 
     def obtener_transcripciones(self, palabra: str):
@@ -124,7 +127,6 @@ class ElasticSearchController:
 
 class TranscripcionesHandler:
     def __init__(self):
-        self.transcripciones = objetos_transcripciones
         self.elastic_search = ElasticSearchController()
 
     def get_transcripciones(self, palabra: str):
