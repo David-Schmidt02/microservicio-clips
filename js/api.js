@@ -6,8 +6,8 @@ export async function buscarCoincidenciasElastic(palabra) {
   return res.json(); // {resultados: [...]}
 }
   
-export async function obtenerListaVideos(canal, start_timestamp, end_timestamp) {
-  const res = await fetch(`${BASE}/videos?canal=${encodeURIComponent(canal)}&timestamp_start=${encodeURIComponent(start_timestamp)}&timestamp_end=${encodeURIComponent(end_timestamp)}`);
+export async function obtenerListaVideos(canal, timestamp) {
+  const res = await fetch(`${BASE}/videos?canal=${encodeURIComponent(canal)}&timestamp=${encodeURIComponent(timestamp)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return Array.isArray(data.videos) ? data.videos : [];
@@ -62,15 +62,12 @@ export async function concatenarYDescargar(videos, canal) {
 }
 
 
-export async function obtenerTranscripcionClip(canal, timestampStart, timestampEnd) {
+export async function obtenerTranscripcionClip(canal, timestamp) {
   const params = new URLSearchParams({
     canal,
-    timestamp_start: timestampStart,
+    timestamp: timestamp,
   });
-  if (timestampEnd) {
-    params.append("timestamp_end", timestampEnd);
-  }
-  const res = await fetch(`${BASE}/transcripcion?${params.toString()}`);
+  const res = await fetch(`${BASE}/transcripcionClip?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return data?.transcripcion ?? null;

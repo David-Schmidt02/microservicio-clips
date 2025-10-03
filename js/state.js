@@ -30,10 +30,9 @@ export function obtenerTranscripcion(nombreArchivo) {
   return state.transcripcionesPorVideo.get(nombreArchivo) || null;
 }
 
-export function setVideoActual(canal, start_timestamp, end_timestamp) {
-  const stTm = formatearTimestamp(start_timestamp);
-  const enTm = formatearTimestamp(end_timestamp);
-  const nombreArchivo = `${canal}_${stTm}_${enTm}.ts`;
+export function setVideoActual(canal, timestamp) {
+  const stTm = formatearTimestamp(timestamp);
+  const nombreArchivo = `${canal}_${stTm}.ts`;
   console.log("Seteando video actual a:", nombreArchivo);
   state.videoActual = nombreArchivo;
   resetSeleccion();

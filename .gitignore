@@ -1,6 +1,8 @@
 *.mp4
 *.ts
 /videos/
+/videos_normalizados/
+/canales/
 /clips/
 __pycache__/
 *.pyc

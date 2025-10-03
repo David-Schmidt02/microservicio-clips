@@ -73,7 +73,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
   mostrarCargando(true);
   try {
-    const videos = await obtenerListaVideos(canal, timestampInicio, timestampFin);
+    const videos = await obtenerListaVideos(canal, timestamp);
     if (!Array.isArray(videos) || !videos.length) {
       mostrarPopup("No se encontraron videos para ese intervalo");
       return;
@@ -84,7 +84,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
     setCanalActual(canal);
     setVideoActualDesdeNombre(nombreArchivo);
-    setFecha(timestampInicio);
+    setFecha(timestamp);
     setListaVideos(listaOrdenada);
 
     configurarReproductor(nombreArchivo);
@@ -92,7 +92,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
     let transcripcion = obtenerTranscripcion(nombreArchivo);
     if (!transcripcion) {
       try {
-        transcripcion = await obtenerTranscripcionClip(canal, timestampInicio, timestampFin);
+        transcripcion = await obtenerTranscripcionClip(canal, timestamp);
         if (transcripcion) {
           guardarTranscripcion(nombreArchivo, transcripcion);
         }
@@ -103,8 +103,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
     const datosTranscripcion = transcripcion || {
       texto: `Clip seleccionado: ${infoClip.nombreCorto}`,
-      start_timestamp: timestampInicio,
-      end_timestamp: timestampFin,
+      timestamp: timestamp,
       canal,
     };
 
@@ -121,25 +120,29 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 }
 
 export async function mostrarVideo(transcripcionResultado) {
+  actualizarClipsRelacionados();
+  actualizarContador();
+  mostrarControles();
+  scrollToPlayer();
+
   if (!transcripcionResultado) return;
 
   const canal = transcripcionResultado.canal;
-  const timestampStart = transcripcionResultado.start_timestamp;
-  const timestampEnd = transcripcionResultado.end_timestamp;
+  const timestamp = transcripcionResultado.timestamp;
 
   try {
     mostrarCargando(true);
     limpiarTranscripciones();
 
-    const videos = await obtenerListaVideos(canal, timestampStart, timestampEnd);
+    const videos = await obtenerListaVideos(canal, timestamp);
     if (!Array.isArray(videos) || !videos.length) {
       mostrarPopup("No se encontraron videos relacionados");
       return;
     }
 
     setCanalActual(canal);
-    setVideoActual(canal, timestampStart, timestampEnd);
-    setFecha(timestampStart);
+    setVideoActual(canal, timestamp);
+    setFecha(timestamp);
     setListaVideos(videos);
 
     if (!state.listaVideos.includes(state.videoActual)) {
@@ -176,7 +179,7 @@ export function ajustarClip(segundos) {
 export function expandir(direccion, lado) {
   const idx = indiceActual();
   if (idx === -1) {
-    mostrarPopup("Error: video no encontrado");
+    mostrarPopup("Video no encontrado en la lista");
     return;
   }
 
@@ -187,13 +190,12 @@ export function expandir(direccion, lado) {
   if (direccion === 1) {
     const seleccionados = esAtras ? state.acumuladosAtras : state.acumuladosAdelante;
     const maximoPosible = Math.min(MAX_ADICIONALES, esAtras ? disponiblesAtras : disponiblesAdelante);
-
     if (seleccionados < maximoPosible) {
       if (esAtras) state.acumuladosAtras++;
       else state.acumuladosAdelante++;
       mostrarPopup(`Se agrego un video ${lado}`);
-    } else if (seleccionados >= MAX_ADICIONALES) {
-      mostrarPopup(`Maximo ${MAX_ADICIONALES} videos ${lado}`);
+    } else if (seleccionados >= maximoPosible && maximoPosible < MAX_ADICIONALES) {
+      mostrarPopup(`Maximo ${maximoPosible} videos ${lado}`);
     } else {
       mostrarPopup(`No hay mas videos ${lado}`);
     }
@@ -210,6 +212,8 @@ export function expandir(direccion, lado) {
 
   actualizarContador();
   actualizarClipsRelacionados();
+  mostrarControles();
+  scrollToPlayer();
 }
 
 export async function descargarConcatenado() {
@@ -266,4 +270,3 @@ export async function descargarConcatenado() {
     deshabilitarBotonDescarga(false, descargaExitosa ? "Procesado" : textoOriginal);
   }
 }
-

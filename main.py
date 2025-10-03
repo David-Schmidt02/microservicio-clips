@@ -46,18 +46,20 @@ def buscar_palabra(palabra: str = Query(..., min_length=1)):
 
 
 @app.get("/videos")
-def obtener_lista_videos(canal: str = Query(..., min_length=1), timestamp_start: str = Query(..., min_length=1), timestamp_end: str = Query(..., min_length=1)):
+def obtener_lista_videos(canal: str = Query(..., min_length=1), timestamp: str = Query(..., min_length=1)):
     # Debería probar si le puedo pegar una búsqueda múltiple al elastic search
-    videos = transcripciones_handler.obtener_lista_videos_vecinos(canal, timestamp_start, timestamp_end)
+    videos = transcripciones_handler.obtener_lista_videos_vecinos(canal, timestamp)
     return {"videos": videos}
 
 
-@app.get("/transcripcion")
-def obtener_transcripcion(canal: str = Query(..., min_length=1), timestamp_start: str = Query(..., min_length=1), timestamp_end: Optional[str] = Query(None)):
-    transcripcion = transcripciones_handler.obtener_transcripcion_por_intervalo(canal, timestamp_start, timestamp_end)
+@app.get("/transcripcionClip")
+def obtener_transcripcion(canal: str = Query(..., min_length=1), timestamp: str = Query(..., min_length=1)):
+    transcripcion = transcripciones_handler.obtener_transcripcion_por_intervalo(canal, timestamp)
     if not transcripcion:
         return JSONResponse(content={"error": "Transcripcion no encontrada"}, status_code=404)
     return {"transcripcion": transcripcion}
+
+
 @app.get("/descargar")
 def descargar_clip(clip: str = Query(...)):
     output_path = os.path.join(OUTPUT_DIR, clip)
@@ -134,8 +136,18 @@ def concatenar_videos(canal: str = Body(..., embed=True), videos: list[str] = Bo
         cmd = [
             "ffmpeg", "-y", "-f", "concat", "-safe", "0",
             "-i", list_path,
-            "-c", "copy", output_path
+            "-c:v", "libx264",
+            "-preset", "veryfast",   # subí a "medium" si podés sacrificar tiempo por mejor compresión
+            "-b:v", "600k",
+            "-maxrate", "700k",
+            "-bufsize", "1400k",
+            "-c:a", "aac",
+            "-b:a", "64k",
+            "-ar", "16000",
+            output_path,
         ]
+
+
         print(f"Ejecutando comando: {' '.join(cmd)}")
         
         # Ejecutar el comando desde el directorio raíz para evitar problemas con rutas
