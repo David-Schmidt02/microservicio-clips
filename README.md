@@ -2,8 +2,25 @@
 
 Este proyecto es un microservicio para buscar, reproducir y concatenar clips de video basados en transcripciones. Permite a los usuarios buscar palabras específicas dentro de transcripciones de videos y luego seleccionar segmentos para concatenarlos en un nuevo clip personalizado.
 
+## Cómo ejecutar el proyecto
+
+### Backend (API)
+Desde la raíz del proyecto, ejecutar:
+```bash
+uvicorn backend.main:app --reload
+```
+El backend estará disponible en `http://localhost:8000`
+
+### Frontend (Interfaz de Usuario)
+Desde la carpeta `frontend`, ejecutar:
+```bash
+python -m http.server 8000
+```
+El frontend estará disponible en `http://localhost:8000`
+
 ## Tabla de Contenidos
 
+- [Cómo ejecutar el proyecto](#cómo-ejecutar-el-proyecto)
 - [Descripción General](#descripción-general)
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Flujo de Trabajo Detallado](#flujo-de-trabajo-detallado)

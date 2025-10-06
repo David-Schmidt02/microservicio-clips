@@ -108,8 +108,8 @@ class ElasticSearchController:
             mapeados.append({
                 "texto": src.get("text", ""),
                 "canal": src.get("slug", ""),
+                "name": src.get("name", ""),
                 "timestamp": src.get("@timestamp", ""),
-                "video_id": src.get("video_id", ""),
                 "service": src.get("service", ""),
                 "channel_id": src.get("channel_id", "")
             })

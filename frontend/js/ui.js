@@ -118,7 +118,7 @@ export function mostrarTranscripcionSeleccionadaCompleta(transcripcion, mostrarV
   // Canal
   const canalInfo = document.createElement("div");
   canalInfo.className = "modal-canal";
-  canalInfo.textContent = `Canal: ${transcripcion.canal || "Desconocido"}`;
+  canalInfo.textContent = `Canal: ${transcripcion.name || transcripcion.canal || "Desconocido"}`;
   // Horario
   const horarioInfo = document.createElement("div");
   horarioInfo.className = "modal-horario";
@@ -131,13 +131,7 @@ export function mostrarTranscripcionSeleccionadaCompleta(transcripcion, mostrarV
     }
   } catch {}
   horarioInfo.textContent = `Horario: ${fechaStr || "-"}`;
-  // Video ID (si existe)
-  const videoIdInfo = document.createElement("div");
-  videoIdInfo.className = "modal-videoid";
-  if (transcripcion.video_id) {
-    videoIdInfo.textContent = `Video ID: ${transcripcion.video_id}`;
-    infoBox.appendChild(videoIdInfo);
-  }
+  
   infoBox.appendChild(canalInfo);
   infoBox.appendChild(horarioInfo);
 
@@ -180,7 +174,17 @@ export function mostrarTranscripcionSeleccionadaCompleta(transcripcion, mostrarV
     if (e.target === overlay) overlay.remove();
   });
 
-  modal.append(btnCerrar, title, scrollBox, btnVerVideo);
+  // Contenedor para botón e información con flex
+  const actionContainer = document.createElement("div");
+  actionContainer.className = "modal-action-container";
+  actionContainer.style.display = "flex";
+  actionContainer.style.alignItems = "flex-start";
+  actionContainer.style.gap = "20px";
+  actionContainer.style.justifyContent = "space-between";
+  actionContainer.appendChild(btnVerVideo);
+  actionContainer.appendChild(infoBox);
+
+  modal.append(btnCerrar, title, scrollBox, actionContainer);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 }

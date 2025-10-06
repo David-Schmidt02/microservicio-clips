@@ -61,6 +61,23 @@
   color: var(--text-muted);
 }
 
+.modal-info-item {
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.modal-info-label {
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.modal-info-value {
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-high);
+}
+
 .modal-scroll {
   max-height: 16rem;
   overflow-y: auto;
