@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from elasticsearch import Elasticsearch
 
-from config import ELASTIC_PASSWORD, ELASTIC_URL, ELASTIC_USER
+from .config import ELASTIC_PASSWORD, ELASTIC_URL, ELASTIC_USER
 
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo

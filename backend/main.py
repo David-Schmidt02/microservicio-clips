@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Query, Body
-from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 import subprocess
@@ -7,7 +6,7 @@ import os
 import uuid
 import ffmpeg  # Biblioteca ffmpeg instalada con pip
 
-from transcripciones_handler import TranscripcionesHandler
+from .transcripciones_handler import TranscripcionesHandler
 
 app = FastAPI()
 
