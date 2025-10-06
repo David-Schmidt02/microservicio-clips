@@ -1,5 +1,5 @@
 import { state } from "./state.js";
-import { formatTs, extraerInfoVideo, recortarTexto } from "./utils.js";
+import { formatTs, extraerInfoVideo} from "./utils.js";
 
 // Referencias globales (DOM) - las inicializamos una vez
 const refs = {
@@ -61,31 +61,42 @@ export function renderResultados(resultados, onClickVideo) {
     empty.classList.add("hidden");
   }
 
-  const canales = Array.from(new Set(resultados.map(r => r.canal)));
-  canales.forEach(canal => {
+  // Agrupar por canal (slug) y obtener el name para mostrar
+  const canalesUnicos = Array.from(new Set(resultados.map(r => r.canal)));
+  canalesUnicos.forEach(canalSlug => {
+    // Buscar el primer resultado de este canal para obtener el name
+    const primerResultado = resultados.find(r => r.canal === canalSlug);
+    const nombreCanal = primerResultado?.name || canalSlug || "Desconocido";
+
     const boxCanal = document.createElement("div");
     boxCanal.className = "channel-box";
 
     const title = document.createElement("div");
     title.className = "channel-title";
-    title.textContent = `Canal: ${canal}`;
+    title.textContent = `Canal: ${nombreCanal}`;
 
-    const resultadosCanal = resultados.filter(r => r.canal === canal);
+    const listado = document.createElement("div");
+    listado.className = "channel-transcriptions";
+
+    const resultadosCanal = resultados.filter(r => r.canal === canalSlug);
     resultadosCanal.forEach((resultado) => {
       const box = document.createElement("div");
       box.className = "transcription-box";
 
       const txt = document.createElement("div");
       txt.className = "transcription-text";
-      txt.textContent = recortarTexto(resultado.texto, 45);
-      box.appendChild(txt);
+      const contenido = (resultado && typeof resultado.texto === "string")
+        ? resultado.texto
+        : "";
+      txt.textContent = contenido || "Sin transcripción disponible";
 
       box.addEventListener("click", () => mostrarTranscripcionSeleccionadaCompleta(resultado, onClickVideo));
 
-      boxCanal.appendChild(box);
+      box.appendChild(txt);
+      listado.appendChild(box);
     });
 
-    boxCanal.prepend(title);
+    boxCanal.append(title, listado);
     cont.appendChild(boxCanal);
   });
 }

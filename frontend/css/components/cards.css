@@ -10,6 +10,10 @@
   background: var(--surface-glass-strong);
   box-shadow: var(--shadow-lg);
   transition: border-color 0.28s ease, transform 0.28s ease;
+  max-height: 22rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .channel-box:hover {
@@ -17,11 +21,35 @@
   border-color: rgba(59, 130, 246, 0.45);
 }
 
+.channel-box::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.channel-box::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 999px;
+}
+
+.channel-box::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.channel-box::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
 .channel-title {
   font-size: 0.95rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(148, 163, 184, 0.75);
+}
+
+.channel-transcriptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .transcription-box {
@@ -46,6 +74,7 @@
   font-size: 0.98rem;
   line-height: 1.6;
   color: var(--text-high);
+  white-space: pre-wrap;
 }
 
 .status-block {
