@@ -4,6 +4,13 @@ from elasticsearch import Elasticsearch
 
 from config import ELASTIC_PASSWORD, ELASTIC_URL, ELASTIC_USER
 
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
+
+ahora = datetime.now(ZoneInfo("America/Argentina/Buenos_Aires"))
+hace_24hs = ahora - timedelta(hours=24) # Si lo cambio a 23 seguro me ahorro problemas a futuro con los datos.
+ts_24hs = hace_24hs.isoformat()
+
 
 def _parse_timestamp(value: str) -> datetime:
     if not value:
@@ -40,8 +47,13 @@ class ElasticSearchController:
         body = {
             "size": 0,  # No queremos hits directos, solo agregaciones
             "query": {
-                "match": {
-                    "text": palabra
+                "bool": {
+                    "must": [
+                        {"match": {"text": palabra}}
+                    ],
+                    "filter": [
+                        {"range": {"@timestamp": {"gte": ts_24hs}}}
+                    ]
                 }
             },
             "aggs": {
