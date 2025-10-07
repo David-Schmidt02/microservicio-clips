@@ -1,13 +1,19 @@
-const BASE = "http://127.0.0.1:8000";
+const BASE = "http://127.0.0.1:8001";
+const API_BASE = `${BASE}/api/v1`;
 
 export async function buscarCoincidenciasElastic(palabra) {
-  const res = await fetch(`${BASE}/buscar?palabra=${encodeURIComponent(palabra)}`);
+  const res = await fetch(`${API_BASE}/search/buscar?palabra=${encodeURIComponent(palabra)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json(); // {resultados: [...]}
 }
   
 export async function obtenerListaVideos(canal, timestamp) {
-  const res = await fetch(`${BASE}/videos?canal=${encodeURIComponent(canal)}&timestamp=${encodeURIComponent(timestamp)}`);
+  const params = new URLSearchParams({
+    canal,
+    timestamp: timestamp,
+    rango: 3
+  });
+  const res = await fetch(`${API_BASE}/clips/videos?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return Array.isArray(data.videos) ? data.videos : [];
@@ -28,12 +34,12 @@ export function descargarArchivoSinRecarga(url, filename = "") {
 }
 
 export function obtenerUrlDescarga(nombreArchivo) {
-  return `${BASE}/descargar?clip=${encodeURIComponent(nombreArchivo)}`;
+  return `${API_BASE}/clips/descargar?clip=${encodeURIComponent(nombreArchivo)}`;
 }
 
 export async function concatenarYDescargar(videos, canal) {
   console.log("Concatenando videos:", videos, "canal:", canal);
-  const resp = await fetch(`${BASE}/concatenar`, {
+  const resp = await fetch(`${API_BASE}/clips/concatenar`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({ videos, canal }),
@@ -52,7 +58,7 @@ export async function concatenarYDescargar(videos, canal) {
     throw new Error(mensaje);
   }
 
-  const nombreArchivo = data && data.archivo;
+  const nombreArchivo = data && data.clip_filename;
   if (!nombreArchivo) {
     throw new Error("La respuesta no incluyó el nombre del archivo generado");
   }
@@ -62,13 +68,14 @@ export async function concatenarYDescargar(videos, canal) {
 }
 
 
-export async function obtenerTranscripcionClip(canal, timestamp) {
+export async function obtenerTranscripcionClip(canal, timestamp, duracion_segundos = 90) {
   const params = new URLSearchParams({
     canal,
     timestamp: timestamp,
+    duracion_segundos: duracion_segundos
   });
-  const res = await fetch(`${BASE}/transcripcionClip?${params.toString()}`);
+  const res = await fetch(`${API_BASE}/search/transcripcionClip?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  return data?.transcripcion ?? null;
+  return data; // Devolver el objeto completo con {texto, canal, timestamp}
 }

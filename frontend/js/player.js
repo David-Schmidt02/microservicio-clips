@@ -73,7 +73,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
   mostrarCargando(true);
   try {
-    const videos = await obtenerListaVideos(canal, timestamp);
+    const videos = await obtenerListaVideos(canal, timestampInicio);
     if (!Array.isArray(videos) || !videos.length) {
       mostrarPopup("No se encontraron videos para ese intervalo");
       return;
@@ -84,7 +84,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
     setCanalActual(canal);
     setVideoActualDesdeNombre(nombreArchivo);
-    setFecha(timestamp);
+    setFecha(timestampInicio);
     setListaVideos(listaOrdenada);
 
     configurarReproductor(nombreArchivo);
@@ -92,8 +92,14 @@ async function seleccionarClipRelacionado(nombreArchivo) {
     let transcripcion = obtenerTranscripcion(nombreArchivo);
     if (!transcripcion) {
       try {
-        transcripcion = await obtenerTranscripcionClip(canal, timestamp);
-        if (transcripcion) {
+        const respuestaAPI = await obtenerTranscripcionClip(canal, timestampInicio);
+        if (respuestaAPI && respuestaAPI.texto) {
+          // Convertir respuesta de API a formato interno esperado
+          transcripcion = {
+            texto: respuestaAPI.texto,
+            timestamp: timestampInicio,
+            canal: canal,
+          };
           guardarTranscripcion(nombreArchivo, transcripcion);
         }
       } catch (error) {
@@ -103,7 +109,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
     const datosTranscripcion = transcripcion || {
       texto: `Clip seleccionado: ${infoClip.nombreCorto}`,
-      timestamp: timestamp,
+      timestamp: timestampInicio,
       canal,
     };
 

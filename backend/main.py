@@ -1,185 +1,117 @@
-from fastapi import FastAPI, Query, Body
+"""
+Punto de entrada principal de la aplicación FastAPI
+"""
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
-import subprocess
-import os
-import uuid
-import ffmpeg  # Biblioteca ffmpeg instalada con pip
 
-from .transcripciones_handler import TranscripcionesHandler
+from backend.config.settings import settings
+from backend.api.v1.main import api_router
+from backend.api.dependencies import get_search_service, get_video_service
 
-app = FastAPI()
+# Crear la aplicación FastAPI
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    description="API para búsqueda y concatenación de clips de video basados en transcripciones",
+    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    docs_url=f"{settings.API_V1_PREFIX}/docs",
+    redoc_url=f"{settings.API_V1_PREFIX}/redoc",
+)
 
-transcripciones_handler = TranscripcionesHandler()
-
-# === Configuración ===
-VIDEO_DIR = "canales"
-OUTPUT_DIR = "clips"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-# Datos simulados como si vinieran de Elasticsearch
-
-
-# === CORS ===
+# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Definir ruta del ejecutable FFmpeg
-# Usamos directamente 'ffmpeg' ya que está en el PATH del sistema
-FFMPEG_BIN = "ffmpeg"
+# Incluir routers de la API
+app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
-# === Endpoints ===
+# Endpoint de health check
+@app.get("/health")
+async def health_check():
+    """Endpoint para verificar el estado de la aplicación"""
+    return {
+        "status": "healthy",
+        "service": settings.PROJECT_NAME,
+        "version": settings.VERSION
+    }
+
+# Mantener compatibilidad con la API anterior (endpoints sin /api/v1)
 @app.get("/buscar")
-def buscar_palabra(palabra: str = Query(..., min_length=1)):
-    """
-    Busca transcripciones que contengan la palabra. -> Tengo que ver cómo se hace en Elasticsearch
-    """
-    # Acá iria una lógica para pegarle al Elasticsearch
-    resultados = transcripciones_handler.get_transcripciones(palabra)
+async def buscar_palabra_legacy(
+    palabra: str,
+    search_service = Depends(get_search_service)
+):
+    """Endpoint legacy - redirige a la nueva API"""
+    transcripciones = await search_service.buscar_transcripciones(palabra)
+    
+    # Formato de respuesta legacy
+    resultados = [t.to_dict() for t in transcripciones]
     return {"resultados": resultados}
 
 
 @app.get("/videos")
-def obtener_lista_videos(canal: str = Query(..., min_length=1), timestamp: str = Query(..., min_length=1)):
-    # Debería probar si le puedo pegar una búsqueda múltiple al elastic search
-    videos = transcripciones_handler.obtener_lista_videos_vecinos(canal, timestamp)
+async def obtener_lista_videos_legacy(
+    canal: str, 
+    timestamp: str,
+    video_service = Depends(get_video_service)
+):
+    """Endpoint legacy - redirige a la nueva API"""
+    videos = await video_service.obtener_videos_vecinos(canal, timestamp)
     return {"videos": videos}
 
 
 @app.get("/transcripcionClip")
-def obtener_transcripcion(canal: str = Query(..., min_length=1), timestamp: str = Query(..., min_length=1)):
-    transcripcion = transcripciones_handler.obtener_transcripcion_por_intervalo(canal, timestamp)
-    if not transcripcion:
-        return JSONResponse(content={"error": "Transcripcion no encontrada"}, status_code=404)
-    return {"transcripcion": transcripcion}
+async def obtener_transcripcion_legacy(
+    canal: str, 
+    timestamp: str,
+    search_service = Depends(get_search_service)
+):
+    """Endpoint legacy - redirige a la nueva API"""
+    texto = await search_service.obtener_transcripcion_clip(canal, timestamp)
+    
+    return {
+        "transcripcion": {
+            "texto": texto,
+            "canal": canal,
+            "timestamp": timestamp
+        }
+    }
+
+
+@app.post("/concatenar")
+async def concatenar_videos_legacy(
+    canal: str, 
+    videos: list[str],
+    video_service = Depends(get_video_service)
+):
+    """Endpoint legacy - redirige a la nueva API"""
+    clip_filename = await video_service.concatenar_videos(canal, videos)
+    
+    return {
+        "message": "Videos concatenados exitosamente",
+        "clip_filename": clip_filename
+    }
 
 
 @app.get("/descargar")
-def descargar_clip(clip: str = Query(...)):
-    output_path = os.path.join(OUTPUT_DIR, clip)
+async def descargar_clip_legacy(clip: str):
+    """Endpoint legacy - redirige a la nueva API"""
+    import os
+    from fastapi.responses import FileResponse
+    from fastapi import HTTPException
+    
+    output_path = os.path.join(settings.OUTPUT_DIR, clip)
     if not os.path.exists(output_path):
-        return JSONResponse(content={"error": "El archivo no existe"}, status_code=404)
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    
     return FileResponse(
         output_path,
         filename=clip,
         media_type="video/mp4",
         headers={"Content-Disposition": f"attachment; filename={clip}"}
     )
-
-@app.post("/concatenar")
-def concatenar_videos(canal: str = Body(..., embed=True), videos: list[str] = Body(..., embed=True)):
-    """
-    Concatena una lista de videos usando FFmpeg y devuelve el archivo resultante.
-    Args:
-        videos (list): Lista de rutas de videos a concatenar
-        
-    Returns:
-        FileResponse: Archivo de video concatenado para descarga
-        o
-        JSONResponse: Error en caso de problemas
-    """
-    if not videos:
-        return JSONResponse(content={"error": "No se enviaron videos"}, status_code=400)
-
-    # Crear archivo temporal con lista de inputs
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    # ffmpeg necesita leer de una lista de archivos, por lo que guardamos los nombres en un archivo temporal
-    list_file = os.path.join(OUTPUT_DIR, f"list_{uuid.uuid4().hex}.txt")
-    
-    # Verificar que los videos (su dir en memoria) existan
-    for v in videos:
-        video_path = os.path.join(VIDEO_DIR, canal, v)
-        if not os.path.exists(video_path):
-            return JSONResponse(
-                content={"error": f"El archivo {v} no existe. Ruta buscada: {os.path.abspath(video_path)}"}, 
-                status_code=400
-            )
-    
-    # Obtener paths absolutos para evitar problemas de rutas relativas
-    current_dir = os.path.abspath(os.getcwd())
-    
-    # Crear el archivo con las rutas absolutas
-    with open(list_file, "w", encoding="utf-8") as f:
-        for v in videos:
-            # Usamos normpath para manejar correctamente las barras según el sistema operativo
-            video_path = os.path.normpath(os.path.join(current_dir, VIDEO_DIR, canal, v))
-            f.write(f"file '{video_path}'\n")
-            print(f"Añadiendo video: {video_path}")
-
-    # Nombre de salida
-    output_file = os.path.join(OUTPUT_DIR, f"clip_{uuid.uuid4().hex}.mp4")
-
-    # Ejecutar FFmpeg usando la biblioteca ffmpeg de Python
-    try:
-        print("Concatenando videos con ffmpeg...")
-        
-        # Usamos el comando ffmpeg directamente desde el PATH con rutas absolutas
-        output_path = os.path.abspath(output_file)
-
-        list_path = os.path.abspath(list_file)
-
-        print(f"Archivo de lista: {list_path}")
-        def leer_archivo(ruta):
-            print(f"Leyendo archivo: {ruta}")
-            with open(ruta, 'r', encoding='utf-8') as archivo:
-                contenido = archivo.read()
-                print(f"Contenido del archivo {ruta}:\n{contenido}")
-
-        leer_archivo(list_path)
-
-        cmd = [
-            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-            "-i", list_path,
-            "-c:v", "libx264",
-            "-preset", "veryfast",   # subí a "medium" si podés sacrificar tiempo por mejor compresión
-            "-b:v", "600k",
-            "-maxrate", "700k",
-            "-bufsize", "1400k",
-            "-c:a", "aac",
-            "-b:a", "64k",
-            "-ar", "16000",
-            output_path,
-        ]
-
-
-        print(f"Ejecutando comando: {' '.join(cmd)}")
-        
-        # Ejecutar el comando desde el directorio raíz para evitar problemas con rutas
-        proceso = subprocess.run(
-            cmd, 
-            check=True, 
-            capture_output=True, 
-            text=True
-        )
-        
-        print("FFmpeg ejecutado correctamente")
-        
-        # Verificar que el archivo de salida realmente se haya creado
-        if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
-            print(f"Error: El archivo de salida no se creó correctamente: {output_file}")
-            return JSONResponse(
-                content={"error": "El archivo de salida no se generó correctamente"}, 
-                status_code=500
-            )
-            
-        print(f"Archivo generado exitosamente: {output_file}, tamaño: {os.path.getsize(output_file)} bytes")
-    except subprocess.CalledProcessError as e:
-        print(f"Error al ejecutar FFmpeg: {e}")
-        print(f"Salida de error: {e.stderr}")
-        return JSONResponse(content={"error": f"FFmpeg falló: {e.stderr}"}, status_code=500)
-    except Exception as e:
-        print(f"Error inesperado: {e}")
-        return JSONResponse(content={"error": f"Error inesperado: {str(e)}"}, status_code=500)
-    finally:
-        # Limpiar archivos temporales
-        if os.path.exists(list_file):
-            print(f"Eliminando archivo temporal: {list_file}")
-            os.remove(list_file)
-
-
-    return {"archivo": os.path.basename(output_file)}

@@ -1,0 +1,20 @@
+# Backend dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Elasticsearch
+elasticsearch>=8.0.0,<9.0.0
+
+# Timezone handling (cross-platform compatible)
+pytz>=2023.3
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Video processing
+ffmpeg-python>=0.2.0
+
+# Pydantic for data validation and settings
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
