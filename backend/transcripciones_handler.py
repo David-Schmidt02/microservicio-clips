@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 ahora = datetime.now(ZoneInfo("America/Argentina/Buenos_Aires"))
 hace_24hs = ahora - timedelta(hours=24) # Si lo cambio a 23 seguro me ahorro problemas a futuro con los datos.
 ts_24hs = hace_24hs.isoformat()
-
+print(f"Filtro de 24hs: {ts_24hs}")
 
 def _parse_timestamp(value: str) -> datetime:
     if not value:
@@ -64,7 +64,7 @@ class ElasticSearchController:
                             "top_hits": {
                                 "size": 10,
                                 "sort": [
-                                    {"@timestamp": {"order": "asc"}}
+                                    {"@timestamp": {"order": "desc"}}
                                 ]
                             }
                         }
@@ -72,9 +72,11 @@ class ElasticSearchController:
                 }
             }
         }
-        # Agregar sort por @timestamp ascendente en todas las búsquedas
+        # Agregar sort por @timestamp descendente en todas las búsquedas
         if "sort" not in body:
-            body["sort"] = [{"@timestamp": {"order": "asc"}}]
+            body["sort"] = [{"@timestamp": {"order": "desc"}}]
+        
+        print(f"Query enviada a ES: {body}")
         resultados = self.es.search(index="streaming_tv", body=body)
         buckets = resultados.get("aggregations", {}).get("por_canal", {}).get("buckets", [])
         hits_filtrados = []
@@ -105,11 +107,13 @@ class ElasticSearchController:
         mapeados = []
         for hit in resultados.get("hits", {}).get("hits", []):
             src = hit.get("_source", {})
+            timestamp_raw = src.get("@timestamp", "")
+            print(f"Timestamp raw desde ES: {timestamp_raw}")
             mapeados.append({
                 "texto": src.get("text", ""),
                 "canal": src.get("slug", ""),
                 "name": src.get("name", ""),
-                "timestamp": src.get("@timestamp", ""),
+                "timestamp": timestamp_raw,
                 "service": src.get("service", ""),
                 "channel_id": src.get("channel_id", "")
             })
@@ -130,7 +134,7 @@ class ElasticSearchController:
                 }
             },
             "sort": [
-                {"@timestamp": {"order": "asc"}}
+                {"@timestamp": {"order": "desc"}}
             ]
         }
         resultados = self.es.search(index="streaming_tv", body=body)

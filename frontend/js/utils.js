@@ -33,7 +33,17 @@ export function formatTime(seconds) {
 
 export function formatTs(ts) {
   const d = new Date(ts);
-  return isNaN(d.getTime()) ? ts : d.toLocaleString();
+  // Usar toLocaleString con zona horaria específica para Argentina y formato 24hs
+  return isNaN(d.getTime()) ? ts : d.toLocaleString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    day: '2-digit',
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false  // Formato 24 horas
+  });
 }
 
 export function extraerInfoVideo(origen) {
@@ -127,7 +137,12 @@ function formatearFechaDesdeCadena(yyyymmdd) {
   const month = Number(yyyymmdd.slice(4, 6));
   const day = Number(yyyymmdd.slice(6, 8));
   const date = new Date(Date.UTC(year, month - 1, day));
-  return isNaN(date.getTime()) ? null : date.toLocaleDateString();
+  return isNaN(date.getTime()) ? null : date.toLocaleDateString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 }
 
 function formatearHoraDesdeCadena(hhmmss) {
@@ -153,13 +168,11 @@ function normalizarIso(ts) {
 }
 
 function extraerFecha(ts) {
-  const d = new Date(ts);
-  return isNaN(d.getTime()) ? "Desconocida" : d.toLocaleDateString();
+  return formatTs(ts);
 }
 
 function extraerHora(ts) {
-  const d = new Date(ts);
-  return isNaN(d.getTime()) ? "Desconocida" : d.toLocaleTimeString();
+  return formatTs(ts);
 }
 
 export function recortarTexto(texto, maxCaracteres = 30) {

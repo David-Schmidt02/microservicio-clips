@@ -1,4 +1,6 @@
 // Estado centralizado de la app
+import { formatTs } from './utils.js';
+
 export const state = {
   listaVideos: [],          // nombres de archivos en /videos
   videoActual: null,        // nombre de archivo seleccionado
@@ -57,9 +59,7 @@ export function setListaVideos(lista) {
 }
 
 export function setFecha(ts) {
-  const d = new Date(ts);
-  const fecha = isNaN(d.getTime()) ? "Desconocida" : d.toLocaleDateString();
-  state.fecha = fecha;
+  state.fecha = formatTs(ts);
   resetSeleccion();
 }
 

@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 import { formatTs, extraerInfoVideo} from "./utils.js";
 
-// Referencias globales (DOM) - las inicializamos una vez
+// Referencias globales (DOM) 
 const refs = {
   videoPlayer: null,
   videoElement: null,
@@ -133,12 +133,11 @@ export function mostrarTranscripcionSeleccionadaCompleta(transcripcion, mostrarV
   // Horario
   const horarioInfo = document.createElement("div");
   horarioInfo.className = "modal-horario";
-  // Formatear fecha si es posible
+  // Formatear fecha usando formatTs para mantener zona horaria correcta
   let fechaStr = transcripcion.timestamp;
   try {
     if (fechaStr) {
-      const dt = new Date(fechaStr);
-      fechaStr = dt.toLocaleString();
+      fechaStr = formatTs(fechaStr);
     }
   } catch {}
   horarioInfo.textContent = `Horario: ${fechaStr || "-"}`;
