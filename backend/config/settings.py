@@ -59,7 +59,12 @@ class Settings(BaseSettings):
         default="streaming_tv",
         description="Índice de Elasticsearch para las transcripciones"
     )
-    
+
+    #ELASTICSEARCH_INDEX: str = Field(
+    #    default="streaming_tv_test",  # ← CAMBIO AQUÍ
+    #    description="Índice de Elasticsearch para las transcripciones (DESARROLLO)"
+    #)
+        
     # Directorios
     VIDEO_DIR: str = "canales"
     OUTPUT_DIR: str = "clips"
