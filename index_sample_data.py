@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import requests
 from requests.auth import HTTPBasicAuth
 import urllib3
-from zoneinfo import ZoneInfo
+import pytz
 
 # Deshabilitar warnings SSL para desarrollo
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -23,7 +23,7 @@ def create_sample_documents():
     import random
     """Crear documentos EXTENSOS de ejemplo para probar concatenación de transcripciones"""
     
-    argentina_tz = ZoneInfo("America/Argentina/Buenos_Aires")
+    argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
     base_time = datetime.now(argentina_tz).replace(minute=0, second=0, microsecond=0)
     documents = []
     

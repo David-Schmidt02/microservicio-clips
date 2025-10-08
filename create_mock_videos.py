@@ -8,7 +8,7 @@ import os
 import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
+import pytz
 
 def create_test_video(output_path: str, duration_seconds: int = 90, text: str = "Test Video"):
     """
@@ -82,8 +82,8 @@ def create_mock_videos():
     
     # Configuración
     canales = ['todonoticias', 'luzutv', 'olgaenvivo_']
-    argentina_tz = ZoneInfo("America/Argentina/Buenos_Aires")
-    base_time = datetime.now(argentina_tz).replace(minute=0, second=0, microsecond=0)
+    argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
+    base_time = datetime.now(argentina_tz)
     videos_per_channel = 10
     
     print("🎬 Creando videos mock para testing...")

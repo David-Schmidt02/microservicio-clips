@@ -41,11 +41,18 @@ class FileSystemRepository(VideoRepositoryInterface):
         
         # Buscar el archivo cuyo rango de tiempo contenga el timestamp buscado
         timestamp_dt = parse_timestamp(timestamp)
+        print(f"🔍 Buscando timestamp: {timestamp} -> {timestamp_dt}")
+        print(f"📂 Archivos encontrados: {len(archivos)}")
+        for i, archivo in enumerate(archivos):
+            print(f"   {i+1}. {archivo}")
+        
         archivo_referencia = None
         for archivo in archivos:
             if self._timestamp_esta_en_archivo(archivo, timestamp_dt):
                 archivo_referencia = archivo
                 break
+        
+        print(f"🎯 Archivo de referencia encontrado: {archivo_referencia}")
         if not archivo_referencia:
             return []
             
@@ -166,29 +173,29 @@ class FileSystemRepository(VideoRepositoryInterface):
             fecha_fin = partes[3]     # YYYYMMDD  
             hora_fin = partes[4]      # HHMMSS
             
-            # Construir datetimes de inicio y fin EN ZONA HORARIA ARGENTINA
-            from zoneinfo import ZoneInfo
-            argentina_tz = ZoneInfo("America/Argentina/Buenos_Aires")
-            
+            # SOLUCIÓN SIMPLE: Todo está en horario Argentina, comparar sin timezone
             inicio_str = f"{fecha_inicio}_{hora_inicio}"
             fin_str = f"{fecha_fin}_{hora_fin}"
             
-            # Los timestamps en los archivos están en hora Argentina
+            # Parsear rangos del archivo (sin timezone)
             inicio_dt = datetime.strptime(inicio_str, "%Y%m%d_%H%M%S")
-            inicio_dt = inicio_dt.replace(tzinfo=argentina_tz)
-            
             fin_dt = datetime.strptime(fin_str, "%Y%m%d_%H%M%S")
-            fin_dt = fin_dt.replace(tzinfo=argentina_tz)
             
-            # Convertir timestamp buscado a Argentina si tiene timezone
+            # Convertir timestamp buscado a naive (sin timezone)
             if timestamp_dt.tzinfo is not None:
-                timestamp_argentina = timestamp_dt.astimezone(argentina_tz)
+                # Si tiene timezone, tomar solo la hora local
+                timestamp_naive = timestamp_dt.replace(tzinfo=None)
             else:
-                # Si no tiene timezone, asumir que ya está en Argentina
-                timestamp_argentina = timestamp_dt.replace(tzinfo=argentina_tz)
-                
-            # Verificar si está dentro del rango (comparar con timezone)
-            esta_en_rango = inicio_dt <= timestamp_argentina <= fin_dt
+                timestamp_naive = timestamp_dt
+            
+            # Comparar directamente (todo en horario Argentina)
+            esta_en_rango = inicio_dt <= timestamp_naive <= fin_dt
+            
+            # DEBUG: Imprimir información de comparación
+            print(f"🔍 Debug archivo: {nombre_archivo}")
+            print(f"   📅 Rango archivo: {inicio_dt} - {fin_dt}")
+            print(f"   🎯 Timestamp buscado: {timestamp_naive}")
+            print(f"   ✅ Está en rango: {esta_en_rango}")
             
             return esta_en_rango
             

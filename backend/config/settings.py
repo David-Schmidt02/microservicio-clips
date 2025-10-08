@@ -55,15 +55,15 @@ class Settings(BaseSettings):
         default="password",
         description="Contraseña de Elasticsearch"
     )
-    #ELASTICSEARCH_INDEX: str = Field(
-    #    default="streaming_tv",
-    #    description="Índice de Elasticsearch para las transcripciones"
-    #)
-
     ELASTICSEARCH_INDEX: str = Field(
-        default="streaming_tv_test",  # ← CAMBIO AQUÍ
-        description="Índice de Elasticsearch para las transcripciones (DESARROLLO)"
+        default="streaming_tv",
+        description="Índice de Elasticsearch para las transcripciones"
     )
+
+    #ELASTICSEARCH_INDEX: str = Field(
+    #    default="streaming_tv_test",  # ← CAMBIO AQUÍ
+    #    description="Índice de Elasticsearch para las transcripciones (DESARROLLO)"
+    #)
         
     # Directorios
     VIDEO_DIR: str = "canales"
