@@ -15,6 +15,7 @@ import {
   concatenarYDescargar,
   descargarArchivoSinRecarga,
   obtenerUrlDescarga,
+  obtenerUrlVideo,
   obtenerTranscripcionClip,
 } from "./api.js";
 import { mostrarCargando, mostrarPopup, extraerInfoVideo } from "./utils.js";
@@ -41,7 +42,8 @@ function configurarReproductor(nombreArchivo) {
   const { videoElement, videoSrc } = getRefs();
   if (!videoElement || !videoSrc) return;
 
-  videoSrc.src = `./canales/${state.canalActual}/${nombreArchivo}`;
+  const videoUrl = obtenerUrlVideo(state.canalActual, nombreArchivo);
+  videoSrc.src = videoUrl;
   videoElement.load();
 
   videoElement.onloadedmetadata = () => {
@@ -147,9 +149,13 @@ export async function mostrarVideo(transcripcionResultado) {
     }
 
     setCanalActual(canal);
-    setVideoActual(canal, timestamp);
     setFecha(timestamp);
     setListaVideos(videos);
+    
+    // Buscar el archivo que contiene el timestamp solicitado
+    const archivoReferencia = encontrarArchivoConTimestamp(videos, timestamp) || videos[0];
+    
+    setVideoActualDesdeNombre(archivoReferencia);
 
     if (!state.listaVideos.includes(state.videoActual)) {
       console.error(`Video ${state.videoActual} no existe en servidor`);
@@ -157,13 +163,31 @@ export async function mostrarVideo(transcripcionResultado) {
       return;
     }
 
-    guardarTranscripcion(state.videoActual, transcripcionResultado);
+    // Obtener transcripción concatenada en lugar de usar solo la individual
+    let transcripcionFinal = transcripcionResultado;
+    try {
+      const respuestaAPI = await obtenerTranscripcionClip(canal, timestamp);
+      if (respuestaAPI && respuestaAPI.texto) {
+        // Usar la transcripción concatenada de la API
+        transcripcionFinal = {
+          texto: respuestaAPI.texto,
+          timestamp: timestamp,
+          canal: canal,
+        };
+      }
+    } catch (error) {
+      console.error("No se pudo obtener la transcripción concatenada, usando la individual", error);
+      // Si hay error, usar la transcripción individual original
+      transcripcionFinal = transcripcionResultado;
+    }
+
+    guardarTranscripcion(state.videoActual, transcripcionFinal);
 
     const resultadosDiv = document.getElementById("resultados");
     if (resultadosDiv) resultadosDiv.innerHTML = "";
 
     configurarReproductor(state.videoActual);
-    renderTranscripcionSeleccionadaVideo(transcripcionResultado);
+    renderTranscripcionSeleccionadaVideo(transcripcionFinal);
     actualizarClipsRelacionados();
     actualizarContador();
     mostrarControles();
@@ -243,13 +267,15 @@ export async function descargarConcatenado() {
     return;
   }
 
+  // Capturar texto original ANTES de modificar el botón
+  const btn = document.getElementById("btnDescargar");
+  const textoOriginal = btn ? btn.textContent : "Descargar clip concatenado";
+  
   mostrarCargando(true);
   actualizarEstadoDescarga("Concatenando videos...", "normal");
   deshabilitarBotonDescarga(true, "Procesando...");
   mostrarPopup(`Procesando ${seleccion.length} videos...`);
 
-  const btn = document.getElementById("btnDescargar");
-  const textoOriginal = btn ? btn.textContent : "Descargar";
   let descargaExitosa = false;
 
   try {
@@ -273,6 +299,68 @@ export async function descargarConcatenado() {
     console.error(e);
   } finally {
     mostrarCargando(false);
-    deshabilitarBotonDescarga(false, descargaExitosa ? "Procesado" : textoOriginal);
+    if (descargaExitosa) {
+      // Mostrar "Procesado" por 3 segundos, luego volver al texto original
+      deshabilitarBotonDescarga(false, "Procesado");
+      
+      // Limpiar timeout previo si existe
+      if (window.resetButtonTimeout) {
+        clearTimeout(window.resetButtonTimeout);
+      }
+      
+      // Programar reseteo del botón
+      window.resetButtonTimeout = setTimeout(() => {
+        deshabilitarBotonDescarga(false, textoOriginal);
+        window.resetButtonTimeout = null;
+      }, 3000);
+    } else {
+      deshabilitarBotonDescarga(false, textoOriginal);
+    }
+  }
+}
+
+/**
+ * Encuentra el archivo que contiene el timestamp especificado
+ */
+function encontrarArchivoConTimestamp(archivos, timestamp) {
+  if (!Array.isArray(archivos) || archivos.length === 0) {
+    return null;
+  }
+
+  try {
+    // Parsear el timestamp objetivo
+    const timestampObj = new Date(timestamp);
+    
+    for (const archivo of archivos) {
+      // Extraer información del archivo: canal_fecha_hora_fecha_hora.ts
+      const partes = archivo.replace('.ts', '').split('_');
+      if (partes.length < 5) {
+        continue;
+      }
+      
+      // Construir timestamps de inicio y fin
+      const fechaInicio = partes[1]; // YYYYMMDD
+      const horaInicio = partes[2];   // HHMMSS
+      const fechaFin = partes[3];     // YYYYMMDD
+      const horaFin = partes[4];      // HHMMSS
+      
+      const inicioStr = `${fechaInicio.slice(0,4)}-${fechaInicio.slice(4,6)}-${fechaInicio.slice(6,8)}T${horaInicio.slice(0,2)}:${horaInicio.slice(2,4)}:${horaInicio.slice(4,6)}`;
+      const finStr = `${fechaFin.slice(0,4)}-${fechaFin.slice(4,6)}-${fechaFin.slice(6,8)}T${horaFin.slice(0,2)}:${horaFin.slice(2,4)}:${horaFin.slice(4,6)}`;
+      
+      const inicioObj = new Date(inicioStr);
+      const finObj = new Date(finStr);
+      
+      // Verificar si el timestamp está dentro del rango
+      if (timestampObj >= inicioObj && timestampObj <= finObj) {
+        console.log("🎯 Archivo seleccionado:", archivo, "para timestamp:", timestamp);
+        return archivo;
+      }
+    }
+    
+    return null;
+    
+  } catch (error) {
+    console.error("❌ Error buscando archivo:", error);
+    return null;
   }
 }

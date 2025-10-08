@@ -1,5 +1,6 @@
 import { state } from "./state.js";
 import { formatTs, extraerInfoVideo} from "./utils.js";
+import { getChannelName } from "./channels.js";
 
 // Referencias globales (DOM) 
 const refs = {
@@ -208,11 +209,16 @@ export function renderTranscripcionSeleccionadaVideo(resultado) {
 
   const textoContenido = (resultado && typeof resultado === "object" && typeof resultado.texto === "string")
     ? resultado.texto
-    : `Clip seleccionado: ${info.nombreCorto}`;
+    : "No hay transcripción disponible para este clip";
 
-  const canalContenido = (resultado && typeof resultado === "object" && resultado.canal)
+  // Obtener el nombre del canal usando el mapeo o la información de la transcripción
+  const slugCanal = (resultado && typeof resultado === "object" && resultado.canal)
     ? resultado.canal
-    : (info.canal && info.canal !== "Desconocido" ? info.canal : state.canalActual || "Desconocido");
+    : (info.canal && info.canal !== "Desconocido" ? info.canal : state.canalActual);
+  
+  const canalContenido = (resultado && typeof resultado === "object" && resultado.name)
+    ? resultado.name  // Usar name si está disponible en la transcripción
+    : getChannelName(slugCanal);  // Sino, usar el mapeo
 
   const fechaCruda = (resultado && typeof resultado === "object" && resultado.start_timestamp)
     ? resultado.start_timestamp
@@ -227,11 +233,6 @@ export function renderTranscripcionSeleccionadaVideo(resultado) {
   const title = document.createElement("div");
   title.className = "selected-channel-title";
   title.textContent = "Transcripcion seleccionada";
-
-  const resumen = document.createElement("div");
-  resumen.className = "selected-transcription-summary";
-  const resumenTexto = info.nombreCorto || info.fecha || "Clip";
-  resumen.textContent = `Clip seleccionado: ${resumenTexto}`;
 
   const text = document.createElement("div");
   text.className = "selected-transcription-text";
@@ -255,7 +256,7 @@ export function renderTranscripcionSeleccionadaVideo(resultado) {
     if (input) input.focus();
   });
 
-  cont.append(title, resumen, text, meta, btn);
+  cont.append(title, text, meta, btn);
 }
 
 export function renderClipsRelacionados(videos, videoActual, onSelect, onToggle) {

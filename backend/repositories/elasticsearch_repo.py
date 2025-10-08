@@ -87,14 +87,21 @@ class ElasticsearchRepository(TranscripcionRepositoryInterface):
         timestamp: str, 
         duracion_segundos: int = 90
     ) -> List[Transcripcion]:
-        """Obtiene transcripciones en un rango de tiempo, centrado en el timestamp seleccionado"""
+        """Obtiene TODAS las transcripciones del video que contiene el timestamp dado"""
         
         t_seleccionado = parse_timestamp(timestamp)
         
-        # Crear un rango que incluya la transcripción seleccionada al inicio
-        # Tomamos desde 5 segundos antes hasta 85 segundos después para un total de 90 segundos
-        t_inicio = t_seleccionado - timedelta(seconds=5)
-        t_fin = t_seleccionado + timedelta(seconds=duracion_segundos - 5)
+        # NUEVA LÓGICA: Calcular el rango del VIDEO, no de la transcripción
+        # Si la transcripción está en 12:01:15, el video podría ser 12:00:00-12:01:30
+        # Necesitamos encontrar el timestamp de INICIO del video que contiene esta transcripción
+        
+        # Estrategia: redondear hacia abajo a intervalos de 90 segundos
+        # Esto asume que los videos son clips de 90 segundos que empiezan cada 90 segundos
+        inicio_epoch = int(t_seleccionado.timestamp())
+        inicio_video_epoch = (inicio_epoch // duracion_segundos) * duracion_segundos
+        
+        t_inicio = datetime.fromtimestamp(inicio_video_epoch, tz=t_seleccionado.tzinfo)
+        t_fin = t_inicio + timedelta(seconds=duracion_segundos)
         
         ts_inicio = format_timestamp_for_query(t_inicio)
         ts_fin = format_timestamp_for_query(t_fin)

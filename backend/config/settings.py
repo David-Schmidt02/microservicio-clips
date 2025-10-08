@@ -55,15 +55,15 @@ class Settings(BaseSettings):
         default="password",
         description="Contraseña de Elasticsearch"
     )
-    ELASTICSEARCH_INDEX: str = Field(
-        default="streaming_tv",
-        description="Índice de Elasticsearch para las transcripciones"
-    )
-
     #ELASTICSEARCH_INDEX: str = Field(
-    #    default="streaming_tv_test",  # ← CAMBIO AQUÍ
-    #    description="Índice de Elasticsearch para las transcripciones (DESARROLLO)"
+    #    default="streaming_tv",
+    #    description="Índice de Elasticsearch para las transcripciones"
     #)
+
+    ELASTICSEARCH_INDEX: str = Field(
+        default="streaming_tv_test",  # ← CAMBIO AQUÍ
+        description="Índice de Elasticsearch para las transcripciones (DESARROLLO)"
+    )
         
     # Directorios
     VIDEO_DIR: str = "canales"
@@ -76,11 +76,11 @@ class Settings(BaseSettings):
     
     # === CONFIGURACIÓN DE ARCHIVOS Y DIRECTORIOS ===
     VIDEO_DIR: str = Field(
-        default="canales",
+        default=str(BASE_DIR.parent / "canales"),
         description="Directorio donde se almacenan los videos por canal"
     )
     OUTPUT_DIR: str = Field(
-        default="clips",
+        default=str(BASE_DIR.parent / "clips"),
         description="Directorio donde se guardan los clips generados"
     )
     

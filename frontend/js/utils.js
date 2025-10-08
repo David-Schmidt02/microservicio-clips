@@ -47,7 +47,6 @@ export function formatTs(ts) {
 }
 
 export function extraerInfoVideo(origen) {
-  console.log("Extraer info de video - input:", origen);
 
   if (typeof origen === "string") {
     return extraerInfoDesdeNombre(origen);
@@ -156,8 +155,12 @@ function formatearHoraDesdeCadena(hhmmss) {
 function crearTimestampIso(yyyymmdd, hhmmss) {
   if (!/^\d{8}$/.test(yyyymmdd) || !/^\d{6}$/.test(hhmmss)) return null;
   const iso = `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}T${hhmmss.slice(0, 2)}:${hhmmss.slice(2, 4)}:${hhmmss.slice(4, 6)}`;
-  const d = new Date(`${iso}Z`);
-  return isNaN(d.getTime()) ? null : `${iso}Z`;
+  
+  // Los archivos están en zona horaria de Argentina, no UTC
+  // Crear el timestamp con offset de Argentina (-03:00)
+  const timestampArgentina = `${iso}-03:00`;
+  const d = new Date(timestampArgentina);
+  return isNaN(d.getTime()) ? null : timestampArgentina;
 }
 
 function normalizarIso(ts) {

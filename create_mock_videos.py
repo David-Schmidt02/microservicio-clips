@@ -8,8 +8,9 @@ import os
 import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-def create_test_video(output_path: str, duration_seconds: int = 10, text: str = "Test Video"):
+def create_test_video(output_path: str, duration_seconds: int = 90, text: str = "Test Video"):
     """
     Crear un video de prueba usando FFmpeg.
     
@@ -80,8 +81,9 @@ def create_mock_videos():
     """Crear videos mock para testing"""
     
     # Configuración
-    canales = ['a24', 'tn', 'c5n']
-    base_time = datetime(2025, 10, 7, 12, 0, 0)  # Fecha actual
+    canales = ['todonoticias', 'luzutv', 'olgaenvivo_']
+    argentina_tz = ZoneInfo("America/Argentina/Buenos_Aires")
+    base_time = datetime.now(argentina_tz).replace(minute=0, second=0, microsecond=0)
     videos_per_channel = 10
     
     print("🎬 Creando videos mock para testing...")
@@ -103,8 +105,8 @@ def create_mock_videos():
             
             # Texto descriptivo para el video
             video_text = f"{canal.upper()} {video_time.strftime('%H:%M:%S')}"
-            
-            if create_test_video(str(filepath), duration_seconds=10, text=video_text):
+
+            if create_test_video(str(filepath), duration_seconds=90, text=video_text):
                 total_created += 1
             else:
                 total_failed += 1
@@ -121,46 +123,6 @@ def create_mock_videos():
             video_count = len(list(canal_dir.glob("*.ts")))
             print(f"   📺 {canal}/ -> {video_count} videos")
 
-def create_sample_elasticsearch_data():
-    """Crear datos de ejemplo para Elasticsearch"""
-    
-    print("\n🔍 Datos de ejemplo para Elasticsearch:")
-    print("-" * 40)
-    
-    # Ejemplos de documentos que deberían estar en Elasticsearch
-    sample_docs = [
-        {
-            "text": "El presidente anunció nuevas medidas económicas para combatir la inflación",
-            "slug": "a24", 
-            "name": "A24 Noticias",
-            "@timestamp": "2025-10-07T12:00:30Z",
-            "service": "streaming_tv",
-            "channel_id": "a24_main"
-        },
-        {
-            "text": "La selección argentina se prepara para el próximo mundial de fútbol",
-            "slug": "tn",
-            "name": "Todo Noticias", 
-            "@timestamp": "2025-10-07T12:05:15Z",
-            "service": "streaming_tv",
-            "channel_id": "tn_main"
-        },
-        {
-            "text": "Nuevas protestas en la capital por el aumento de precios",
-            "slug": "c5n",
-            "name": "C5N Noticias",
-            "@timestamp": "2025-10-07T12:10:00Z", 
-            "service": "streaming_tv",
-            "channel_id": "c5n_main"
-        }
-    ]
-    
-    print("📄 Ejemplos de documentos para indexar en 'streaming_tv':")
-    for i, doc in enumerate(sample_docs, 1):
-        print(f"\n{i}. Canal: {doc['slug']}")
-        print(f"   Texto: {doc['text'][:50]}...")
-        print(f"   Timestamp: {doc['@timestamp']}")
-
 if __name__ == "__main__":
     print("🚀 Configurando entorno mock para microservicio de clips")
     print("=" * 60)
@@ -171,7 +133,6 @@ if __name__ == "__main__":
         exit(1)
     
     create_mock_videos()
-    create_sample_elasticsearch_data()
     
     print(f"\n🎉 ¡Configuración mock completada!")
     print(f"\n📋 Próximos pasos:")

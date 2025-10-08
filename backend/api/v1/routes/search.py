@@ -68,11 +68,9 @@ async def obtener_transcripcion(
             canal, timestamp, duracion_segundos
         )
         
+        # Si no hay texto, devolver respuesta válida con mensaje informativo
         if not texto_concatenado:
-            raise HTTPException(
-                status_code=404, 
-                detail="No se encontraron transcripciones para el clip especificado"
-            )
+            texto_concatenado = "No hay transcripciones disponibles para este periodo de tiempo"
         
         return TranscripcionClipResponse(
             texto=texto_concatenado,
@@ -83,4 +81,8 @@ async def obtener_transcripcion(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error interno del servidor")
+        print(f"Error en transcripcionClip: {str(e)}")
+        print(f"Tipo de error: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")

@@ -37,6 +37,10 @@ export function obtenerUrlDescarga(nombreArchivo) {
   return `${API_BASE}/clips/descargar?clip=${encodeURIComponent(nombreArchivo)}`;
 }
 
+export function obtenerUrlVideo(canal, nombreArchivo) {
+  return `${API_BASE}/clips/video/${encodeURIComponent(canal)}/${encodeURIComponent(nombreArchivo)}`;
+}
+
 export async function concatenarYDescargar(videos, canal) {
   console.log("Concatenando videos:", videos, "canal:", canal);
   const resp = await fetch(`${API_BASE}/clips/concatenar`, {

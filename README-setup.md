@@ -108,9 +108,44 @@ curl http://localhost:9200/_cluster/health     # Elasticsearch
 # Buscar transcripciones
 curl "http://localhost:8001/api/v1/search/buscar?palabra=test"
 
+# Obtener videos vecinos
+curl "http://localhost:8001/api/v1/clips/videos?canal=luzutv&timestamp=2025-10-08T10:00:01-03:00&rango=3"
+
+# Obtener transcripción de clip
+curl "http://localhost:8001/api/v1/search/transcripcionClip?canal=luzutv&timestamp=2025-10-08T10:00:01-03:00&duracion_segundos=30"
+
+# Servir video individual
+curl -I "http://localhost:8001/api/v1/clips/video/luzutv/luzutv_20251008_100000_20251008_100130.ts"
+
+# Concatenar videos
+curl -X POST "http://localhost:8001/api/v1/clips/concatenar" \
+     -H "Content-Type: application/json" \
+     -d '{"canal":"luzutv","videos":["video1.ts","video2.ts"]}'
+
 # Health check
 curl "http://localhost:8001/health"
 
 # Documentación interactiva
 open http://localhost:8001/docs
 ```
+
+## 📹 Nuevos Endpoints de Video
+
+### Servir Videos Individuales
+- **Endpoint**: `GET /api/v1/clips/video/{canal}/{archivo}`
+- **Descripción**: Sirve archivos de video individuales para reproducción
+- **Características**:
+  - ✅ Conversión automática .ts → .mp4 para mejor compatibilidad
+  - ✅ Cache inteligente (no re-convierte si ya existe)
+  - ✅ Headers optimizados para streaming (Accept-Ranges, Cache-Control)
+  - ✅ Fallback a archivo original si falla conversión
+
+### Obtener Videos Vecinos
+- **Endpoint**: `GET /api/v1/clips/videos`
+- **Parámetros**: `canal`, `timestamp`, `rango`
+- **Descripción**: Encuentra videos en un rango temporal alrededor de un timestamp
+
+### Concatenación con Nombres Descriptivos
+- **Formato anterior**: `clip_uuid.mp4`
+- **Formato nuevo**: `{canal}-{fecha}_{hora_inicio}_{hora_fin}.mp4`
+- **Ejemplo**: `todonoticias-20251008_100000_100430.mp4`

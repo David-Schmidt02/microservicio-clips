@@ -42,13 +42,11 @@ export function setVideoActual(canal, timestamp) {
 
 export function setVideoActualDesdeNombre(nombreArchivo) {
   if (!nombreArchivo) return;
-  console.log("Seteando video actual manualmente a:", nombreArchivo);
   state.videoActual = nombreArchivo;
   resetSeleccion();
 }
 
 export function setCanalActual(canal) {
-  console.log("Seteando canal actual a:", canal);
   state.canalActual = canal;
   resetSeleccion();
 }
