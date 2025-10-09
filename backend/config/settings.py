@@ -126,7 +126,21 @@ class Settings(BaseSettings):
         default=3,
         description="Tolerancia en segundos para considerar videos como continuos"
     )
-    
+
+    # === CONFIGURACIÓN DE LIMPIEZA AUTOMÁTICA ===
+    CLEANUP_ENABLED: bool = Field(
+        default=True,
+        description="Habilitar limpieza automática de clips temporales"
+    )
+    CLEANUP_INTERVAL_HOURS: float = Field(
+        default=1.0,
+        description="Cada cuántas horas ejecutar la limpieza automática (acepta decimales)"
+    )
+    CLEANUP_MAX_AGE_HOURS: float = Field(
+        default=2.0,
+        description="Edad máxima en horas de clips a mantener (acepta decimales)"
+    )
+
     class Config:
         env_file = str(ENV_FILE)
         env_file_encoding = 'utf-8'

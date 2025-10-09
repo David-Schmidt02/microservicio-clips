@@ -16,22 +16,26 @@ router = APIRouter(prefix="/clips", tags=["clips"])
 
 @router.get("/videos", response_model=VideosResponse)
 async def obtener_lista_videos(
-    canal: str = Query(..., min_length=1, description="Canal de los videos"),
+    canal: str = Query(..., min_length=1, max_length=100, description="Canal de los videos"),
     timestamp: str = Query(..., min_length=1, description="Timestamp de referencia"),
     rango: int = Query(3, ge=1, le=10, description="Cantidad de videos a cada lado del timestamp"),
     video_service: VideoService = Depends(get_video_service)
 ):
     """
     Obtiene una lista de videos vecinos a un timestamp específico.
-    
-    - **canal**: Nombre del canal
+
+    - **canal**: Nombre del canal (máximo 100 caracteres)
     - **timestamp**: Timestamp de referencia en formato ISO 8601
     - **rango**: Cantidad de videos a obtener a cada lado (por defecto 3, máximo 10)
-    
+
     Retorna una lista de nombres de archivos de video ordenados cronológicamente.
     """
     try:
-        videos = await video_service.obtener_videos_vecinos(canal, timestamp, rango)
+        # VALIDACIÓN: Prevenir path traversal y caracteres inválidos
+        if '..' in canal or '/' in canal or '\\' in canal:
+            raise HTTPException(status_code=400, detail="Nombre de canal contiene caracteres inválidos")
+
+        videos = await video_service.obtener_videos_vecinos(canal.strip(), timestamp, rango)
         return VideosResponse(videos=videos)
 
     except ValueError as e:
@@ -47,15 +51,26 @@ async def concatenar_videos(
 ):
     """
     Concatena una lista de videos y devuelve el archivo resultante.
-    
+
     - **canal**: Canal de los videos
-    - **videos**: Lista de nombres de archivos de video a concatenar
-    
+    - **videos**: Lista de nombres de archivos de video a concatenar (máximo 20)
+
     Retorna información sobre el clip generado.
     """
     try:
+        # VALIDACIÓN: Limitar cantidad de videos a concatenar
+        if len(request.videos) > 20:
+            raise HTTPException(status_code=400, detail="Máximo 20 videos por concatenación")
+
+        if len(request.videos) == 0:
+            raise HTTPException(status_code=400, detail="Debe proporcionar al menos un video")
+
+        # VALIDACIÓN: Prevenir path traversal en canal
+        if '..' in request.canal or '/' in request.canal or '\\' in request.canal:
+            raise HTTPException(status_code=400, detail="Nombre de canal contiene caracteres inválidos")
+
         clip_filename = await video_service.concatenar_videos(
-            request.canal,
+            request.canal.strip(),
             request.videos
         )
         
@@ -81,17 +96,31 @@ async def descargar_clip(
 ):
     """
     Descarga un clip previamente generado.
-    
+
     - **clip**: Nombre del archivo de clip (incluye extensión .mp4)
-    
+
     Retorna el archivo de video para descarga directa.
     """
     try:
+        # VALIDACIÓN: Prevenir path traversal y acceso a archivos fuera de OUTPUT_DIR
+        if not clip or not isinstance(clip, str):
+            raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+
+        if '..' in clip or '/' in clip or '\\' in clip:
+            raise HTTPException(status_code=400, detail="Nombre de archivo contiene caracteres inválidos")
+
+        if not clip.endswith('.mp4'):
+            raise HTTPException(status_code=400, detail="Solo se permiten archivos .mp4")
+
         output_path = os.path.join(settings.OUTPUT_DIR, clip)
-        
+
+        # Verificar que el path resuelto esté dentro de OUTPUT_DIR (prevenir path traversal)
+        if not os.path.abspath(output_path).startswith(os.path.abspath(settings.OUTPUT_DIR)):
+            raise HTTPException(status_code=400, detail="Ruta de archivo inválida")
+
         if not os.path.exists(output_path):
             raise HTTPException(
-                status_code=404, 
+                status_code=404,
                 detail="Archivo de clip no encontrado"
             )
         
@@ -115,22 +144,39 @@ async def servir_video(
 ):
     """
     Sirve un archivo de video original para reproducción.
-    
+
     - **canal**: Nombre del canal
     - **archivo**: Nombre del archivo de video (.ts)
-    
+
     Retorna el archivo de video para streaming.
     """
     try:
+        # VALIDACIÓN: Prevenir path traversal
+        if not canal or not isinstance(canal, str):
+            raise HTTPException(status_code=400, detail="Nombre de canal inválido")
+
+        if '..' in canal or '/' in canal or '\\' in canal:
+            raise HTTPException(status_code=400, detail="Nombre de canal contiene caracteres inválidos")
+
+        if not archivo or not isinstance(archivo, str):
+            raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+
+        if '..' in archivo or '/' in archivo or '\\' in archivo:
+            raise HTTPException(status_code=400, detail="Nombre de archivo contiene caracteres inválidos")
+
         # Validar que el archivo tenga extensión .ts
         if not archivo.endswith('.ts'):
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail="Solo se permiten archivos .ts"
             )
-        
+
         # Construir ruta del archivo
         video_path = os.path.join(settings.VIDEO_DIR, canal, archivo)
+
+        # Verificar que el path resuelto esté dentro de VIDEO_DIR (prevenir path traversal)
+        if not os.path.abspath(video_path).startswith(os.path.abspath(settings.VIDEO_DIR)):
+            raise HTTPException(status_code=400, detail="Ruta de archivo inválida")
         
         if not os.path.exists(video_path):
             raise HTTPException(

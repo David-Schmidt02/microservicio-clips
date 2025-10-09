@@ -1,14 +1,48 @@
 """
 Punto de entrada principal de la aplicación FastAPI
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config.settings import settings
 from backend.api.v1.main import api_router
 from backend.api.dependencies import get_search_service, get_video_service
+from backend.scheduler.instances import cleanup_scheduler
 
-# Crear la aplicación FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Manejo del ciclo de vida de la aplicación.
+    Se ejecuta al iniciar y al cerrar la aplicación.
+    """
+    # === STARTUP ===
+    print("\n" + "="*60)
+    print(f">> Iniciando {settings.PROJECT_NAME} v{settings.VERSION}")
+    print("="*60)
+
+    # Iniciar scheduler de limpieza automática si está habilitado
+    if settings.CLEANUP_ENABLED:
+        cleanup_scheduler.iniciar(
+            intervalo_horas=settings.CLEANUP_INTERVAL_HOURS,
+            max_age_hours=settings.CLEANUP_MAX_AGE_HOURS
+        )
+    else:
+        print(">> Limpieza automatica deshabilitada (CLEANUP_ENABLED=False)")
+
+    print("="*60 + "\n")
+
+    yield  # La aplicación está corriendo
+
+    # === SHUTDOWN ===
+    print("\n" + "="*60)
+    print(">> Cerrando aplicacion...")
+    cleanup_scheduler.detener()
+    print("="*60 + "\n")
+
+
+# Crear la aplicación FastAPI con lifespan
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -16,6 +50,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
     docs_url=f"{settings.API_V1_PREFIX}/docs",
     redoc_url=f"{settings.API_V1_PREFIX}/redoc",
+    lifespan=lifespan,
 )
 
 # Configurar CORS

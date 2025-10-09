@@ -9,6 +9,7 @@
   limpiarTranscripciones,
   guardarTranscripcion,
   obtenerTranscripcion,
+  resetearPlayer,
 } from "./state.js";
 import {
   obtenerListaVideos,
@@ -48,9 +49,7 @@ function configurarReproductor(nombreArchivo) {
 
   videoElement.onloadedmetadata = () => {
     videoElement.currentTime = 0;
-    videoElement.play().catch(() => {
-      // El autoplay puede bloquearse; lo ignoramos.
-    });
+    // Autoplay desactivado - el usuario debe iniciar reproducción manualmente
   };
 
   setTituloPlayer(nombreArchivo);
@@ -145,7 +144,9 @@ export async function mostrarVideo(transcripcionResultado) {
 
     const videos = await obtenerListaVideos(canal, timestamp);
     if (!Array.isArray(videos) || !videos.length) {
-      mostrarPopup("No se encontraron videos relacionados");
+      // Resetear estado del player cuando no hay videos
+      resetearPlayer();
+      mostrarPopup("No se encontraron clips para este periodo de tiempo");
       return;
     }
 

@@ -21,13 +21,20 @@ class FileSystemRepository(VideoRepositoryInterface):
         os.makedirs(self.output_dir, exist_ok=True)
     
     async def obtener_videos_vecinos(
-        self, 
-        canal: str, 
-        timestamp: str, 
+        self,
+        canal: str,
+        timestamp: str,
         rango: int = 3
     ) -> List[str]:
         """Obtiene videos vecinos a un timestamp"""
-        
+
+        # VALIDACIÓN: Prevenir path traversal en el parámetro de canal
+        if not canal or not isinstance(canal, str):
+            raise ValueError("Canal inválido")
+
+        if '..' in canal or '/' in canal or '\\' in canal:
+            raise ValueError(f"Canal contiene caracteres inválidos: {canal}")
+
         tm_start = self._formatear_timestamp(timestamp)
         canal_path = os.path.join(self.video_dir, canal)
         
@@ -64,10 +71,24 @@ class FileSystemRepository(VideoRepositoryInterface):
     
     async def concatenar_videos(self, canal: str, videos: List[str]) -> str:
         """Concatena una lista de videos y retorna la ruta del resultado"""
-        
+
         if not videos:
             raise ValueError("La lista de videos está vacía")
-            
+
+        # VALIDACIÓN: Sanitizar nombres de archivos para prevenir inyección de comandos
+        # y path traversal en los parámetros de ffmpeg
+        for video in videos:
+            if not video or not isinstance(video, str):
+                raise ValueError(f"Nombre de video inválido: {video}")
+
+            # Verificar que no contenga secuencias peligrosas
+            if '..' in video or '/' in video or '\\' in video:
+                raise ValueError(f"Nombre de video contiene caracteres inválidos: {video}")
+
+            # Verificar que termine en .ts
+            if not video.endswith('.ts'):
+                raise ValueError(f"El archivo debe terminar en .ts: {video}")
+
         # Generar nombre descriptivo para el clip basado en el primer y último video
         primer_video = videos[0]
         ultimo_video = videos[-1]
@@ -110,13 +131,21 @@ class FileSystemRepository(VideoRepositoryInterface):
                 for path in input_paths:
                     f.write(f"file '{path}'\n")
 
-            # Ejecutar ffmpeg para concatenar
+            # Ejecutar ffmpeg para concatenar con compresión H.264
+            # CRF 23: Calidad visualmente sin pérdidas
+            # preset fast: Balance entre velocidad y compresión
+            # Reduce tamaño ~30-50% vs -c copy
             cmd = [
                 settings.FFMPEG_BIN,
                 '-f', 'concat',
                 '-safe', '0',
                 '-i', list_file,
-                '-c', 'copy',
+                '-c:v', 'libx264',        # Codec de video H.264
+                '-crf', '23',             # Calidad (0-51, menor=mejor, 23=visualmente lossless)
+                '-preset', 'fast',        # Velocidad de encoding
+                '-c:a', 'aac',            # Codec de audio
+                '-b:a', '128k',           # Bitrate de audio
+                '-movflags', '+faststart', # Optimizar para streaming web
                 output_path
             ]
 
@@ -154,6 +183,13 @@ class FileSystemRepository(VideoRepositoryInterface):
         Returns:
             Tupla (timestamp_inicio, timestamp_fin) en formato ISO 8601, o None si no se encuentra
         """
+        # VALIDACIÓN: Prevenir path traversal en el parámetro de canal
+        if not canal or not isinstance(canal, str):
+            raise ValueError("Canal inválido")
+
+        if '..' in canal or '/' in canal or '\\' in canal:
+            raise ValueError(f"Canal contiene caracteres inválidos: {canal}")
+
         canal_path = os.path.join(self.video_dir, canal)
 
         if not os.path.exists(canal_path):

@@ -17,6 +17,17 @@ export function resetSeleccion() {
   state.acumuladosAdelante = 0;
 }
 
+export function resetearPlayer() {
+  // Reset completo del estado del player
+  state.listaVideos = [];
+  state.videoActual = null;
+  state.canalActual = null;
+  state.fecha = null;
+  state.acumuladosAtras = 0;
+  state.acumuladosAdelante = 0;
+  state.transcripcionesPorVideo.clear();
+}
+
 
 export function limpiarTranscripciones() {
   state.transcripcionesPorVideo.clear();
