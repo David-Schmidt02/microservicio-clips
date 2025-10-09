@@ -367,12 +367,7 @@ export function renderClipsRelacionados(videos, videoActual, onSelect, onToggle)
     }
 
     if (typeof onSelect === "function") {
-      card.addEventListener("click", (event) => {
-        console.log(`🖱️ Click detectado en card de clip: ${nombre}`);
-        console.log(`📍 Event target:`, event.target);
-        console.log(`📍 Event currentTarget:`, event.currentTarget);
-        onSelect(nombre);
-      });
+      card.addEventListener("click", () => onSelect(nombre));
     }
 
     cont.appendChild(card);

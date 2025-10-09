@@ -62,18 +62,15 @@ class SearchService:
         if self.video_repo:
             try:
                 rango = await self.video_repo.obtener_rango_temporal_video(canal, timestamp)
-                print(f"🎬 Rango temporal obtenido: {rango}")
 
                 if rango:
                     timestamp_inicio, timestamp_fin = rango
-                    print(f"📅 Buscando transcripciones entre {timestamp_inicio} y {timestamp_fin}")
 
                     # Usar el nuevo método con rango específico
                     if hasattr(self.transcripcion_repo, 'obtener_transcripciones_por_rango_temporal'):
                         transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_rango_temporal(
                             canal, timestamp_inicio, timestamp_fin
                         )
-                        print(f"✅ Transcripciones encontradas: {len(transcripciones)}")
                     else:
                         # Fallback si el repo no tiene el método nuevo
                         transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_clip(
@@ -98,8 +95,5 @@ class SearchService:
 
         # Concatenar todos los textos
         texto_concatenado = " ".join([t.texto for t in transcripciones if t.texto])
-        print(f"📝 Texto concatenado (largo: {len(texto_concatenado)} caracteres)")
-        print(f"🔍 Primeros 200 chars: {texto_concatenado[:200]}")
-        print(f"🔍 Últimos 200 chars: {texto_concatenado[-200:]}")
 
         return texto_concatenado
