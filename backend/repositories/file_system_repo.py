@@ -41,26 +41,26 @@ class FileSystemRepository(VideoRepositoryInterface):
         
         # Buscar el archivo cuyo rango de tiempo contenga el timestamp buscado
         timestamp_dt = parse_timestamp(timestamp)
-        print(f"🔍 Buscando timestamp: {timestamp} -> {timestamp_dt}")
-        print(f"📂 Archivos encontrados: {len(archivos)}")
-        for i, archivo in enumerate(archivos):
-            print(f"   {i+1}. {archivo}")
-        
+
         archivo_referencia = None
         for archivo in archivos:
             if self._timestamp_esta_en_archivo(archivo, timestamp_dt):
                 archivo_referencia = archivo
                 break
-        
-        print(f"🎯 Archivo de referencia encontrado: {archivo_referencia}")
+
         if not archivo_referencia:
             return []
             
         idx = archivos.index(archivo_referencia)
         start_idx = max(0, idx - rango)
         end_idx = min(len(archivos), idx + rango + 1)
-        
-        return archivos[start_idx:end_idx]
+
+        videos_seleccionados = archivos[start_idx:end_idx]
+
+        # Validar si hay gaps (saltos temporales) en los videos seleccionados
+        # self._validar_continuidad_temporal(videos_seleccionados)  # Comentado para producción
+
+        return videos_seleccionados
     
     async def concatenar_videos(self, canal: str, videos: List[str]) -> str:
         """Concatena una lista de videos y retorna la ruta del resultado"""
@@ -109,13 +109,7 @@ class FileSystemRepository(VideoRepositoryInterface):
             with open(list_file, 'w') as f:
                 for path in input_paths:
                     f.write(f"file '{path}'\n")
-            
-            print(f"📝 Archivo de lista creado: {list_file}")
-            # Verificar contenido del archivo para debugging
-            with open(list_file, 'r') as f:
-                content = f.read()
-                print(f"📝 Contenido del archivo de lista:\n{content}")
-            
+
             # Ejecutar ffmpeg para concatenar
             cmd = [
                 settings.FFMPEG_BIN,
@@ -125,25 +119,19 @@ class FileSystemRepository(VideoRepositoryInterface):
                 '-c', 'copy',
                 output_path
             ]
-            
-            print(f"Ejecutando FFmpeg: {' '.join(cmd)}")
+
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 check=True
             )
-            
-            print(f"Concatenación exitosa: {clip_filename}")
+
             return clip_filename
             
         except subprocess.CalledProcessError as e:
-            print(f"Error de FFmpeg: {e.stderr}")
-            print(f"Comando ejecutado: {' '.join(cmd)}")
-            print(f"Return code: {e.returncode}")
-            raise RuntimeError(f"Error en concatenación: {e.stderr}")
+            raise RuntimeError(f"Error en concatenación de videos: {e.stderr}")
         except Exception as e:
-            print(f"Error general en concatenación: {str(e)}")
             raise RuntimeError(f"Error en concatenación: {str(e)}")
         finally:
             # Limpiar archivo temporal
@@ -155,50 +143,168 @@ class FileSystemRepository(VideoRepositoryInterface):
         dt = parse_timestamp(timestamp)
         return dt.strftime("%Y%m%d_%H%M%S")
     
+    async def obtener_rango_temporal_video(
+        self,
+        canal: str,
+        timestamp: str
+    ) -> tuple[str, str] | None:
+        """
+        Encuentra el video que contiene el timestamp y retorna su rango temporal real.
+
+        Returns:
+            Tupla (timestamp_inicio, timestamp_fin) en formato ISO 8601, o None si no se encuentra
+        """
+        canal_path = os.path.join(self.video_dir, canal)
+
+        if not os.path.exists(canal_path):
+            print(f"⚠️ Canal no encontrado: {canal_path}")
+            return None
+
+        archivos = sorted([
+            f for f in os.listdir(canal_path)
+            if f.endswith(".ts")
+        ])
+
+        timestamp_dt = parse_timestamp(timestamp)
+
+        for archivo in archivos:
+            rango = self._extraer_rango_temporal_archivo(archivo)
+            if rango is None:
+                continue
+
+            inicio_dt, fin_dt = rango
+            timestamp_naive = timestamp_dt.replace(tzinfo=None) if timestamp_dt.tzinfo else timestamp_dt
+
+            # IMPORTANTE: El timestamp de fin es EXCLUSIVO (el siguiente video empieza ahí)
+            # Por ejemplo: Video 09:59:14-10:00:44 NO incluye 10:00:44
+            #              Video 10:00:44-10:02:14 SÍ incluye 10:00:44
+            if inicio_dt <= timestamp_naive < fin_dt:
+                # Convertir a ISO 8601 con timezone de Argentina
+                from backend.config.settings import settings
+                # IMPORTANTE: Usar localize() con pytz, NO replace()
+                inicio_aware = settings.TIMEZONE.localize(inicio_dt)
+                fin_aware = settings.TIMEZONE.localize(fin_dt)
+
+                inicio_iso = inicio_aware.isoformat()
+                fin_iso = fin_aware.isoformat()
+
+                return (inicio_iso, fin_iso)
+
+        return None
+
+    def _extraer_rango_temporal_archivo(self, nombre_archivo: str) -> tuple[datetime, datetime] | None:
+        """
+        Extrae el rango temporal (inicio, fin) de un nombre de archivo.
+
+        Formato esperado: canal_YYYYMMDD_HHMMSS_YYYYMMDD_HHMMSS.ts
+
+        Returns:
+            Tupla (inicio_dt, fin_dt) como datetime naive, o None si no se puede parsear
+        """
+        try:
+            partes = nombre_archivo.replace('.ts', '').split('_')
+            if len(partes) < 5:
+                return None
+
+            fecha_inicio = partes[1]  # YYYYMMDD
+            hora_inicio = partes[2]   # HHMMSS
+            fecha_fin = partes[3]     # YYYYMMDD
+            hora_fin = partes[4]      # HHMMSS
+
+            inicio_str = f"{fecha_inicio}_{hora_inicio}"
+            fin_str = f"{fecha_fin}_{hora_fin}"
+
+            inicio_dt = datetime.strptime(inicio_str, "%Y%m%d_%H%M%S")
+            fin_dt = datetime.strptime(fin_str, "%Y%m%d_%H%M%S")
+
+            return (inicio_dt, fin_dt)
+
+        except Exception:
+            return None
+
     def _timestamp_esta_en_archivo(self, nombre_archivo: str, timestamp_dt: datetime) -> bool:
         """
         Verifica si un timestamp está dentro del rango de tiempo de un archivo de video.
-        
+
         Formato esperado: canal_YYYYMMDD_HHMMSS_YYYYMMDD_HHMMSS.ts
+
+        IMPORTANTE: El timestamp de fin es EXCLUSIVO.
         """
-        try:
-            # Extraer las partes del nombre: canal_inicio_fin.ts
-            partes = nombre_archivo.replace('.ts', '').split('_')
-            if len(partes) < 5:
-                return False
-                
-            # Las partes son: [canal, fecha_inicio, hora_inicio, fecha_fin, hora_fin]
-            fecha_inicio = partes[1]  # YYYYMMDD
-            hora_inicio = partes[2]   # HHMMSS
-            fecha_fin = partes[3]     # YYYYMMDD  
-            hora_fin = partes[4]      # HHMMSS
-            
-            # SOLUCIÓN SIMPLE: Todo está en horario Argentina, comparar sin timezone
-            inicio_str = f"{fecha_inicio}_{hora_inicio}"
-            fin_str = f"{fecha_fin}_{hora_fin}"
-            
-            # Parsear rangos del archivo (sin timezone)
-            inicio_dt = datetime.strptime(inicio_str, "%Y%m%d_%H%M%S")
-            fin_dt = datetime.strptime(fin_str, "%Y%m%d_%H%M%S")
-            
-            # Convertir timestamp buscado a naive (sin timezone)
-            if timestamp_dt.tzinfo is not None:
-                # Si tiene timezone, tomar solo la hora local
-                timestamp_naive = timestamp_dt.replace(tzinfo=None)
-            else:
-                timestamp_naive = timestamp_dt
-            
-            # Comparar directamente (todo en horario Argentina)
-            esta_en_rango = inicio_dt <= timestamp_naive <= fin_dt
-            
-            # DEBUG: Imprimir información de comparación
-            print(f"🔍 Debug archivo: {nombre_archivo}")
-            print(f"   📅 Rango archivo: {inicio_dt} - {fin_dt}")
-            print(f"   🎯 Timestamp buscado: {timestamp_naive}")
-            print(f"   ✅ Está en rango: {esta_en_rango}")
-            
-            return esta_en_rango
-            
-        except Exception as e:
-            print(f"Error parseando archivo {nombre_archivo}: {e}")
+        rango = self._extraer_rango_temporal_archivo(nombre_archivo)
+        if rango is None:
             return False
+
+        inicio_dt, fin_dt = rango
+
+        # Convertir timestamp buscado a naive (sin timezone)
+        timestamp_naive = timestamp_dt.replace(tzinfo=None) if timestamp_dt.tzinfo else timestamp_dt
+
+        # Comparar directamente (todo en horario Argentina)
+        # El fin es EXCLUSIVO: [inicio, fin)
+        return inicio_dt <= timestamp_naive < fin_dt
+
+    def _validar_continuidad_temporal(self, archivos: List[str]) -> None:
+        """
+        Valida que no haya gaps (saltos temporales) entre videos consecutivos.
+
+        Imprime advertencias si detecta discontinuidades.
+
+        Args:
+            archivos: Lista de nombres de archivos a validar
+        """
+        if len(archivos) < 2:
+            return
+
+        print(f"\n🔍 Validando continuidad temporal de {len(archivos)} videos...")
+
+        gaps_detectados = []
+
+        for i in range(len(archivos) - 1):
+            video_actual = archivos[i]
+            video_siguiente = archivos[i + 1]
+
+            rango_actual = self._extraer_rango_temporal_archivo(video_actual)
+            rango_siguiente = self._extraer_rango_temporal_archivo(video_siguiente)
+
+            if not rango_actual or not rango_siguiente:
+                continue
+
+            _, fin_actual = rango_actual
+            inicio_siguiente, _ = rango_siguiente
+
+            # Calcular diferencia en segundos
+            diferencia = (inicio_siguiente - fin_actual).total_seconds()
+
+            # Tolerancia: permitir gaps pequeños (configurables en settings)
+            # Solo reportar gaps significativos
+            from backend.config.settings import settings
+            tolerancia = settings.GAP_TOLERANCE_SECONDS
+
+            if diferencia > tolerancia:
+                gap_info = {
+                    'video_actual': video_actual,
+                    'video_siguiente': video_siguiente,
+                    'fin_actual': fin_actual,
+                    'inicio_siguiente': inicio_siguiente,
+                    'gap_segundos': diferencia
+                }
+                gaps_detectados.append(gap_info)
+
+                print(f"⚠️ GAP DETECTADO entre videos {i+1} y {i+2}:")
+                print(f"   📹 Video {i+1}: {video_actual}")
+                print(f"      Termina: {fin_actual.strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"   📹 Video {i+2}: {video_siguiente}")
+                print(f"      Empieza: {inicio_siguiente.strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"   ⏱️  Salto temporal: {diferencia} segundos")
+
+        from backend.config.settings import settings
+        tolerancia = settings.GAP_TOLERANCE_SECONDS
+
+        if not gaps_detectados:
+            print(f"✅ Todos los videos son continuos (gaps ≤ {tolerancia}s son normales)")
+        else:
+            print(f"\n⚠️ RESUMEN: Se detectaron {len(gaps_detectados)} gap(s) significativo(s)")
+            print(f"   Los clips concatenados tendrán saltos notables en el tiempo.")
+            print(f"   Nota: Gaps menores o iguales a {tolerancia}s son considerados normales y no se reportan.")
+
+        print("")  # Línea en blanco para separar

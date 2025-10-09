@@ -61,7 +61,14 @@ function actualizarClipsRelacionados() {
 }
 
 async function seleccionarClipRelacionado(nombreArchivo) {
-  if (!nombreArchivo || nombreArchivo === state.videoActual) return;
+  console.log(`🖱️ seleccionarClipRelacionado() llamado con: ${nombreArchivo}`);
+  console.log(`📌 state.videoActual actual: ${state.videoActual}`);
+  console.trace("🔍 Stack trace de la llamada:");
+
+  if (!nombreArchivo || nombreArchivo === state.videoActual) {
+    console.log(`⏭️ Saltando: archivo es null o es el mismo que el actual`);
+    return;
+  }
 
   const infoClip = extraerInfoVideo(nombreArchivo);
   const canal = infoClip.canal && infoClip.canal !== "Desconocido" ? infoClip.canal : state.canalActual;
@@ -91,22 +98,30 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 
     configurarReproductor(nombreArchivo);
 
-    let transcripcion = obtenerTranscripcion(nombreArchivo);
-    if (!transcripcion) {
-      try {
-        const respuestaAPI = await obtenerTranscripcionClip(canal, timestampInicio);
-        if (respuestaAPI && respuestaAPI.texto) {
-          // Convertir respuesta de API a formato interno esperado
-          transcripcion = {
-            texto: respuestaAPI.texto,
-            timestamp: timestampInicio,
-            canal: canal,
-          };
-          guardarTranscripcion(nombreArchivo, transcripcion);
-        }
-      } catch (error) {
-        console.error("No se pudo obtener la transcripcion del clip", error);
+    // SIEMPRE obtener la transcripción del servidor (no usar cache)
+    // Cada video tiene su propio rango temporal único
+    let transcripcion = null;
+    try {
+      console.log(`📝 Obteniendo transcripción para: ${nombreArchivo}, timestamp: ${timestampInicio}`);
+      const respuestaAPI = await obtenerTranscripcionClip(canal, timestampInicio);
+      console.log(`📝 Respuesta recibida:`, respuestaAPI);
+
+      if (respuestaAPI && respuestaAPI.texto) {
+        // Convertir respuesta de API a formato interno esperado
+        transcripcion = {
+          texto: respuestaAPI.texto,
+          timestamp: timestampInicio,
+          canal: canal,
+        };
+        guardarTranscripcion(nombreArchivo, transcripcion);
+        console.log(`✅ Transcripción guardada para ${nombreArchivo}`);
+      } else {
+        console.warn(`⚠️ Respuesta sin texto para ${nombreArchivo}`);
       }
+    } catch (error) {
+      console.error("❌ Error obteniendo transcripción del clip:", error);
+      // NO usar cache - mostrar mensaje genérico
+      transcripcion = null;
     }
 
     const datosTranscripcion = transcripcion || {
@@ -128,15 +143,13 @@ async function seleccionarClipRelacionado(nombreArchivo) {
 }
 
 export async function mostrarVideo(transcripcionResultado) {
-  actualizarClipsRelacionados();
-  actualizarContador();
-  mostrarControles();
-  scrollToPlayer();
-
   if (!transcripcionResultado) return;
 
   const canal = transcripcionResultado.canal;
   const timestamp = transcripcionResultado.timestamp;
+
+  // Deshabilitar clicks en clips relacionados durante la carga
+  window.__disableClipSelection = true;
 
   try {
     mostrarCargando(true);
@@ -154,8 +167,10 @@ export async function mostrarVideo(transcripcionResultado) {
     
     // Buscar el archivo que contiene el timestamp solicitado
     const archivoReferencia = encontrarArchivoConTimestamp(videos, timestamp) || videos[0];
-    
+    console.log(`🎬 Archivo de referencia seleccionado: ${archivoReferencia}`);
+
     setVideoActualDesdeNombre(archivoReferencia);
+    console.log(`📌 state.videoActual seteado a: ${state.videoActual}`);
 
     if (!state.listaVideos.includes(state.videoActual)) {
       console.error(`Video ${state.videoActual} no existe en servidor`);
@@ -163,10 +178,17 @@ export async function mostrarVideo(transcripcionResultado) {
       return;
     }
 
-    // Obtener transcripción concatenada en lugar de usar solo la individual
+    // Obtener transcripción concatenada del video
+    // IMPORTANTE: Pasar el timestamp ORIGINAL de la búsqueda, no el inicio del video
+    // El backend se encarga de buscar el video que contiene ese timestamp y devolver todas sus transcripciones
+    console.log(`📝 Video encontrado: ${archivoReferencia}`);
+    console.log(`🌐 Haciendo request a API: canal=${canal}, timestamp=${timestamp} (timestamp original de búsqueda)`);
+
     let transcripcionFinal = transcripcionResultado;
     try {
       const respuestaAPI = await obtenerTranscripcionClip(canal, timestamp);
+      console.log(`✅ Respuesta de API recibida:`, respuestaAPI);
+
       if (respuestaAPI && respuestaAPI.texto) {
         // Usar la transcripción concatenada de la API
         transcripcionFinal = {
@@ -174,9 +196,12 @@ export async function mostrarVideo(transcripcionResultado) {
           timestamp: timestamp,
           canal: canal,
         };
+        console.log(`✅ Transcripción final asignada, largo: ${transcripcionFinal.texto.length} caracteres`);
+      } else {
+        console.warn(`⚠️ Respuesta API sin texto, usando transcripción original`);
       }
     } catch (error) {
-      console.error("No se pudo obtener la transcripción concatenada, usando la individual", error);
+      console.error("❌ No se pudo obtener la transcripción concatenada, usando la individual", error);
       // Si hay error, usar la transcripción individual original
       transcripcionFinal = transcripcionResultado;
     }
@@ -192,9 +217,17 @@ export async function mostrarVideo(transcripcionResultado) {
     actualizarContador();
     mostrarControles();
     scrollToPlayer();
+
+    // Habilitar clicks después de un pequeño delay para evitar clicks accidentales
+    setTimeout(() => {
+      window.__disableClipSelection = false;
+      console.log("✅ Clicks en clips relacionados habilitados");
+    }, 500);
+
   } catch (error) {
     console.error("Error al cargar video", error);
     mostrarPopup("No se pudo cargar el clip");
+    window.__disableClipSelection = false;
   } finally {
     mostrarCargando(false);
   }
@@ -330,35 +363,40 @@ function encontrarArchivoConTimestamp(archivos, timestamp) {
   try {
     // Parsear el timestamp objetivo
     const timestampObj = new Date(timestamp);
-    
+    console.log("🔍 Buscando video para timestamp:", timestamp, "→", timestampObj);
+
     for (const archivo of archivos) {
       // Extraer información del archivo: canal_fecha_hora_fecha_hora.ts
       const partes = archivo.replace('.ts', '').split('_');
       if (partes.length < 5) {
         continue;
       }
-      
-      // Construir timestamps de inicio y fin
+
+      // Construir timestamps de inicio y fin CON ZONA HORARIA de Argentina
       const fechaInicio = partes[1]; // YYYYMMDD
       const horaInicio = partes[2];   // HHMMSS
       const fechaFin = partes[3];     // YYYYMMDD
       const horaFin = partes[4];      // HHMMSS
-      
-      const inicioStr = `${fechaInicio.slice(0,4)}-${fechaInicio.slice(4,6)}-${fechaInicio.slice(6,8)}T${horaInicio.slice(0,2)}:${horaInicio.slice(2,4)}:${horaInicio.slice(4,6)}`;
-      const finStr = `${fechaFin.slice(0,4)}-${fechaFin.slice(4,6)}-${fechaFin.slice(6,8)}T${horaFin.slice(0,2)}:${horaFin.slice(2,4)}:${horaFin.slice(4,6)}`;
-      
+
+      // IMPORTANTE: Agregar zona horaria -03:00 (Argentina) como en crearTimestampIso()
+      const inicioStr = `${fechaInicio.slice(0,4)}-${fechaInicio.slice(4,6)}-${fechaInicio.slice(6,8)}T${horaInicio.slice(0,2)}:${horaInicio.slice(2,4)}:${horaInicio.slice(4,6)}-03:00`;
+      const finStr = `${fechaFin.slice(0,4)}-${fechaFin.slice(4,6)}-${fechaFin.slice(6,8)}T${horaFin.slice(0,2)}:${horaFin.slice(2,4)}:${horaFin.slice(4,6)}-03:00`;
+
       const inicioObj = new Date(inicioStr);
       const finObj = new Date(finStr);
-      
-      // Verificar si el timestamp está dentro del rango
+
+      console.log(`  📹 ${archivo}: ${inicioStr} → ${finStr}`);
+
+      // Verificar si el timestamp está dentro del rango (inclusive)
       if (timestampObj >= inicioObj && timestampObj <= finObj) {
-        console.log("🎯 Archivo seleccionado:", archivo, "para timestamp:", timestamp);
+        console.log("  ✅ ¡Match encontrado!");
         return archivo;
       }
     }
-    
+
+    console.warn("⚠️ No se encontró archivo que contenga el timestamp");
     return null;
-    
+
   } catch (error) {
     console.error("❌ Error buscando archivo:", error);
     return null;

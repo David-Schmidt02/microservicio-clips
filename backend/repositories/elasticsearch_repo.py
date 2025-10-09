@@ -82,27 +82,28 @@ class ElasticsearchRepository(TranscripcionRepositoryInterface):
         return transcripciones
     
     async def obtener_transcripciones_por_clip(
-        self, 
-        canal: str, 
-        timestamp: str, 
+        self,
+        canal: str,
+        timestamp: str,
         duracion_segundos: int = 90
     ) -> List[Transcripcion]:
-        """Obtiene TODAS las transcripciones del video que contiene el timestamp dado"""
-        
+        """
+        Obtiene TODAS las transcripciones del video que contiene el timestamp dado.
+
+        NOTA: Este método ahora es un fallback. Lo ideal es usar
+        obtener_transcripciones_por_rango_temporal() con el rango real del video.
+        """
+
         t_seleccionado = parse_timestamp(timestamp)
-        
-        # NUEVA LÓGICA: Calcular el rango del VIDEO, no de la transcripción
-        # Si la transcripción está en 12:01:15, el video podría ser 12:00:00-12:01:30
-        # Necesitamos encontrar el timestamp de INICIO del video que contiene esta transcripción
-        
-        # Estrategia: redondear hacia abajo a intervalos de 90 segundos
-        # Esto asume que los videos son clips de 90 segundos que empiezan cada 90 segundos
+
+        # FALLBACK: Calcular el rango asumiendo videos de duración fija
+        # Esto solo se usa si no se puede obtener el rango real del video
         inicio_epoch = int(t_seleccionado.timestamp())
         inicio_video_epoch = (inicio_epoch // duracion_segundos) * duracion_segundos
-        
+
         t_inicio = datetime.fromtimestamp(inicio_video_epoch, tz=t_seleccionado.tzinfo)
         t_fin = t_inicio + timedelta(seconds=duracion_segundos)
-        
+
         ts_inicio = format_timestamp_for_query(t_inicio)
         ts_fin = format_timestamp_for_query(t_fin)
         
@@ -135,5 +136,54 @@ class ElasticsearchRepository(TranscripcionRepositoryInterface):
                 channel_id=src.get("channel_id", "")
             )
             transcripciones.append(transcripcion)
-            
+
+        return transcripciones
+
+    async def obtener_transcripciones_por_rango_temporal(
+        self,
+        canal: str,
+        timestamp_inicio: str,
+        timestamp_fin: str
+    ) -> List[Transcripcion]:
+        """
+        Obtiene TODAS las transcripciones en un rango temporal específico.
+
+        Args:
+            canal: Canal del video
+            timestamp_inicio: Timestamp de inicio en formato ISO 8601
+            timestamp_fin: Timestamp de fin en formato ISO 8601
+
+        Returns:
+            Lista de transcripciones ordenadas cronológicamente
+        """
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"slug": canal}},
+                        {"range": {"@timestamp": {"gte": timestamp_inicio, "lt": timestamp_fin}}}
+                    ]
+                }
+            },
+            "sort": [
+                {"@timestamp": {"order": "asc"}}  # ASC para mantener orden cronológico
+            ],
+            "size": 100  # Asegurar que obtenemos suficientes resultados
+        }
+
+        resultados = self.es.search(index=settings.ELASTICSEARCH_INDEX, body=body)
+
+        transcripciones = []
+        for hit in resultados.get("hits", {}).get("hits", []):
+            src = hit.get("_source", {})
+            transcripcion = Transcripcion(
+                texto=src.get("text", ""),
+                canal=src.get("slug", ""),
+                name=src.get("name", ""),
+                timestamp=src.get("@timestamp", ""),
+                service=src.get("service", ""),
+                channel_id=src.get("channel_id", "")
+            )
+            transcripciones.append(transcripcion)
+
         return transcripciones

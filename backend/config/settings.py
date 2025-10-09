@@ -122,6 +122,10 @@ class Settings(BaseSettings):
         default=10,
         description="Cantidad máxima de videos vecinos permitida"
     )
+    GAP_TOLERANCE_SECONDS: int = Field(
+        default=3,
+        description="Tolerancia en segundos para considerar videos como continuos"
+    )
     
     class Config:
         env_file = str(ENV_FILE)

@@ -31,19 +31,13 @@ async def obtener_lista_videos(
     Retorna una lista de nombres de archivos de video ordenados cronológicamente.
     """
     try:
-        print(f"Obteniendo videos para canal: {canal}, timestamp: {timestamp}, rango: {rango}")
         videos = await video_service.obtener_videos_vecinos(canal, timestamp, rango)
-        print(f"Videos encontrados: {len(videos)} - {videos[:3] if videos else 'Ninguno'}")
-        
         return VideosResponse(videos=videos)
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        print(f"Error en obtener_lista_videos: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.post("/concatenar")
@@ -60,9 +54,8 @@ async def concatenar_videos(
     Retorna información sobre el clip generado.
     """
     try:
-        print(f"🎬 Concatenando videos - Canal: {request.canal}, Videos: {request.videos}")
         clip_filename = await video_service.concatenar_videos(
-            request.canal, 
+            request.canal,
             request.videos
         )
         
@@ -79,10 +72,7 @@ async def concatenar_videos(
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        print(f"❌ Error en concatenar_videos: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.get("/descargar")
@@ -199,5 +189,4 @@ async def servir_video(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        print(f"❌ Error sirviendo video {canal}/{archivo}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error interno del servidor")

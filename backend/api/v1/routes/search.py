@@ -77,12 +77,8 @@ async def obtener_transcripcion(
             canal=canal,
             timestamp=timestamp
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        print(f"Error en transcripcionClip: {str(e)}")
-        print(f"Tipo de error: {type(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")

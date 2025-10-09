@@ -24,10 +24,15 @@ def get_filesystem_repo() -> FileSystemRepository:
 # === SERVICIOS ===
 
 def get_search_service(
-    transcripcion_repo: ElasticsearchRepository = Depends(get_elasticsearch_repo)
+    transcripcion_repo: ElasticsearchRepository = Depends(get_elasticsearch_repo),
+    video_repo: FileSystemRepository = Depends(get_filesystem_repo)
 ) -> SearchService:
-    """Dependencia para obtener el servicio de búsqueda"""
-    return SearchService(transcripcion_repo)
+    """
+    Dependencia para obtener el servicio de búsqueda.
+
+    Ahora también inyecta el video_repo para poder obtener rangos temporales reales.
+    """
+    return SearchService(transcripcion_repo, video_repo)
 
 
 def get_video_service(
