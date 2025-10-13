@@ -41,7 +41,7 @@ docker-compose up -d
 
 ```bash
 # Backend con arquitectura en capas
-uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # O usando el script directo
 python -m backend.main
@@ -57,15 +57,15 @@ python -m http.server 8080
 ## 🌐 URLs de Acceso
 
 - **Frontend**: http://localhost:8080
-- **Backend API**: http://localhost:8001
-- **Documentación API**: http://localhost:8001/docs
-- **Health Check**: http://localhost:8001/health
+- **Backend API**: http://localhost:8000
+- **Documentación API**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
 - **Elasticsearch**: http://localhost:9200
 
 ## 🏗️ Arquitectura del Backend
 
 ### Arquitectura en Capas
-- **Puerto**: 8001
+- **Puerto**: 8000
 - **Archivo**: `backend/main.py`
 - **Estructura**: API/Services/Repositories/Models
 - **Endpoints**: `/api/v1/search/`, `/api/v1/clips/`
@@ -88,7 +88,7 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt  # Para desarrollo
 
 # Levantar servicios
-uvicorn backend.main:app --reload --port 8001  # Backend
+uvicorn backend.main:app --reload --port 8000  # Backend
 python -m http.server 8080                     # Frontend
 docker-compose up -d                           # Elasticsearch
 
@@ -98,7 +98,7 @@ black .                                        # Formatear código
 flake8 .                                       # Linting
 
 # Health checks
-curl http://localhost:8001/health              # Backend
+curl http://localhost:8000/health              # Backend
 curl http://localhost:9200/_cluster/health     # Elasticsearch
 ```
 
@@ -106,27 +106,27 @@ curl http://localhost:9200/_cluster/health     # Elasticsearch
 
 ```bash
 # Buscar transcripciones
-curl "http://localhost:8001/api/v1/search/buscar?palabra=test"
+curl "http://localhost:8000/api/v1/search/buscar?palabra=test"
 
 # Obtener videos vecinos
-curl "http://localhost:8001/api/v1/clips/videos?canal=luzutv&timestamp=2025-10-08T10:00:01-03:00&rango=3"
+curl "http://localhost:8000/api/v1/clips/videos?canal=luzutv&timestamp=2025-10-08T10:00:01-03:00&rango=3"
 
 # Obtener transcripción de clip
-curl "http://localhost:8001/api/v1/search/transcripcionClip?canal=luzutv&timestamp=2025-10-08T10:00:01-03:00&duracion_segundos=30"
+curl "http://localhost:8000/api/v1/search/transcripcionClip?canal=luzutv&timestamp=2025-10-08T10:00:01-03:00&duracion_segundos=30"
 
 # Servir video individual
-curl -I "http://localhost:8001/api/v1/clips/video/luzutv/luzutv_20251008_100000_20251008_100130.ts"
+curl -I "http://localhost:8000/api/v1/clips/video/luzutv/luzutv_20251008_100000_20251008_100130.ts"
 
 # Concatenar videos
-curl -X POST "http://localhost:8001/api/v1/clips/concatenar" \
+curl -X POST "http://localhost:8000/api/v1/clips/concatenar" \
      -H "Content-Type: application/json" \
      -d '{"canal":"luzutv","videos":["video1.ts","video2.ts"]}'
 
 # Health check
-curl "http://localhost:8001/health"
+curl "http://localhost:8000/health"
 
 # Documentación interactiva
-open http://localhost:8001/docs
+open http://localhost:8000/docs
 ```
 
 ## 📹 Nuevos Endpoints de Video

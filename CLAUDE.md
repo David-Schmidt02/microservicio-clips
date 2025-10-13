@@ -27,8 +27,8 @@ This is a **video clip search and concatenation microservice** for TV streaming 
 ### Running the Application
 
 ```bash
-# Backend (port 8001)
-uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
+# Backend (port 8000)
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Frontend (port 8080)
 cd frontend && python -m http.server 8080
@@ -64,7 +64,7 @@ python index_sample_data.py
 
 ```bash
 # Backend health
-curl http://localhost:8001/health
+curl http://localhost:8000/health
 
 # Elasticsearch health
 curl http://localhost:9200/_cluster/health
@@ -298,7 +298,7 @@ The frontend **must not modify backend endpoints** (see `frontend/API-COMMUNICAT
 
 **API Base URL**: Configured in `frontend/js/api.js`:
 ```javascript
-const CONFIG = { API_BASE_URL: "http://127.0.0.1:8001" };
+const CONFIG = { API_BASE_URL: "http://127.0.0.1:8000" };
 ```
 
 ## Known Issues & Workarounds
@@ -336,7 +336,7 @@ const CONFIG = { API_BASE_URL: "http://127.0.0.1:8001" };
 ### Health
 - `GET /health` - Service health check
 
-Full API documentation: http://localhost:8001/api/v1/docs
+Full API documentation: http://localhost:8000/api/v1/docs
 
 ## Dependency Injection
 

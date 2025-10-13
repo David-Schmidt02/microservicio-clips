@@ -1,4 +1,4 @@
-const BASE = "http://127.0.0.1:8001";
+const BASE = "http://127.0.0.1:8000";
 const API_BASE = `${BASE}/api/v1`;
 
 export async function buscarCoincidenciasElastic(palabra) {

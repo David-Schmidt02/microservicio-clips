@@ -1,0 +1,264 @@
+{
+  "info": {
+    "name": "Microservicio Clips API",
+    "description": "API para búsqueda de transcripciones y generación de clips de video para TV streaming",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "microservicio-clips-api",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "apiVersion",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "testCanal",
+      "value": "todonoticias",
+      "type": "string"
+    },
+    {
+      "key": "testTimestamp",
+      "value": "2025-10-07T12:00:00-03:00",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Verifica que el servicio esté funcionando correctamente.\n\nRespuesta esperada:\n```json\n{\n  \"status\": \"ok\",\n  \"service\": \"microservicio-clips\"\n}\n```"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Buscar palabra",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/search/buscar?palabra=milei",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "search", "buscar"],
+              "query": [
+                {
+                  "key": "palabra",
+                  "value": "milei",
+                  "description": "Palabra o frase a buscar en las transcripciones (máx 200 caracteres)"
+                }
+              ]
+            },
+            "description": "Busca transcripciones que contengan la palabra especificada.\n\nRetorna hasta 10 resultados por canal, ordenados cronológicamente.\n\nRespuesta:\n```json\n{\n  \"resultados\": [\n    {\n      \"canal\": \"todonoticias\",\n      \"name\": \"Todo Noticias\",\n      \"timestamp\": \"2025-10-07T12:00:00-03:00\",\n      \"texto\": \"Transcripción del contenido...\"\n    }\n  ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener transcripcion de clip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/search/transcripcionClip?canal={{testCanal}}&timestamp={{testTimestamp}}&duracion_segundos=90",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "search", "transcripcionClip"],
+              "query": [
+                {
+                  "key": "canal",
+                  "value": "{{testCanal}}",
+                  "description": "Nombre del canal (máx 100 caracteres)"
+                },
+                {
+                  "key": "timestamp",
+                  "value": "{{testTimestamp}}",
+                  "description": "Timestamp de inicio del clip (formato ISO 8601)"
+                },
+                {
+                  "key": "duracion_segundos",
+                  "value": "90",
+                  "description": "Duración del clip (por defecto 90, máx 300)"
+                }
+              ]
+            },
+            "description": "Obtiene la transcripción concatenada de un clip específico.\n\nRespuesta:\n```json\n{\n  \"texto\": \"Transcripción concatenada del clip...\",\n  \"canal\": \"todonoticias\",\n  \"timestamp\": \"2025-10-07T12:00:00-03:00\"\n}\n```"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clips",
+      "item": [
+        {
+          "name": "Obtener lista de videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/clips/videos?canal={{testCanal}}&timestamp={{testTimestamp}}&rango=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "clips", "videos"],
+              "query": [
+                {
+                  "key": "canal",
+                  "value": "{{testCanal}}",
+                  "description": "Nombre del canal (máx 100 caracteres)"
+                },
+                {
+                  "key": "timestamp",
+                  "value": "{{testTimestamp}}",
+                  "description": "Timestamp de referencia (formato ISO 8601)"
+                },
+                {
+                  "key": "rango",
+                  "value": "3",
+                  "description": "Cantidad de videos a cada lado (por defecto 3, máx 10)"
+                }
+              ]
+            },
+            "description": "Obtiene una lista de videos vecinos a un timestamp específico.\n\nRespuesta:\n```json\n{\n  \"videos\": [\n    \"todonoticias_20251007_115900_20251007_120030.ts\",\n    \"todonoticias_20251007_120030_20251007_120200.ts\",\n    \"todonoticias_20251007_120200_20251007_120330.ts\"\n  ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Concatenar videos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"canal\": \"todonoticias\",\n  \"videos\": [\n    \"todonoticias_20251007_115900_20251007_120030.ts\",\n    \"todonoticias_20251007_120030_20251007_120200.ts\",\n    \"todonoticias_20251007_120200_20251007_120330.ts\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/clips/concatenar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "clips", "concatenar"]
+            },
+            "description": "Concatena una lista de videos y genera un clip en formato MP4.\n\nBody:\n- canal (string): Canal de los videos\n- videos (array): Lista de nombres de archivos a concatenar (máx 20)\n\nRespuesta:\n```json\n{\n  \"message\": \"Clip generado exitosamente\",\n  \"clip_filename\": \"todonoticias-20251007_115900_120330.mp4\",\n  \"videos_concatenados\": 3\n}\n```\n\nNotas:\n- Los videos deben existir en el directorio del canal\n- El archivo generado se guarda en el directorio clips/\n- Formato del nombre: {canal}-{fecha}_{hora_inicio}_{hora_fin}.mp4"
+          },
+          "response": []
+        },
+        {
+          "name": "Descargar clip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/clips/descargar?clip=todonoticias-20251007_115900_120330.mp4",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "clips", "descargar"],
+              "query": [
+                {
+                  "key": "clip",
+                  "value": "todonoticias-20251007_115900_120330.mp4",
+                  "description": "Nombre del archivo de clip (incluye extensión .mp4)"
+                }
+              ]
+            },
+            "description": "Descarga un clip previamente generado.\n\nRetorna el archivo de video en formato MP4 con headers:\n- Content-Type: video/mp4\n- Content-Disposition: attachment; filename=\"{clip}\"\n\nNotas:\n- El clip debe haber sido generado mediante /concatenar\n- Si no existe, retorna error 404"
+          },
+          "response": []
+        },
+        {
+          "name": "Servir video original",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/clips/video/{{testCanal}}/todonoticias_20251007_120000_20251007_120130.ts",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "{{apiVersion}}",
+                "clips",
+                "video",
+                "{{testCanal}}",
+                "todonoticias_20251007_120000_20251007_120130.ts"
+              ]
+            },
+            "description": "Sirve un archivo de video original (segmento .ts) para reproducción.\n\nRetorna el archivo de video en formato MPEG-TS con headers:\n- Content-Type: video/mp2t\n- Content-Disposition: inline\n\nNotas:\n- El archivo debe existir en canales/{canal}/\n- Este endpoint se usa para reproducción en el player\n- Soporta range requests para seeking"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Maintenance",
+      "item": [
+        {
+          "name": "Limpiar clips antiguos",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/maintenance/cleanup?max_age_hours=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "maintenance", "cleanup"],
+              "query": [
+                {
+                  "key": "max_age_hours",
+                  "value": "2",
+                  "description": "Edad máxima en horas (por defecto 1, máx 24)"
+                }
+              ]
+            },
+            "description": "Elimina clips generados hace más de X horas.\n\nRespuesta:\n```json\n{\n  \"message\": \"Limpieza completada: 5 archivo(s) eliminado(s)\",\n  \"cantidad_eliminados\": 5,\n  \"archivos_eliminados\": [\n    \"todonoticias-20251006_120000_120330.mp4\",\n    \"luzutv-20251006_140000_140230.mp4\"\n  ]\n}\n```\n\nNotas:\n- Solo elimina archivos del directorio clips/\n- No afecta los videos originales en canales/\n- El scheduler automático ejecuta esta limpieza periódicamente"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener estadisticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/maintenance/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "maintenance", "stats"]
+            },
+            "description": "Obtiene estadísticas sobre los clips almacenados.\n\nRespuesta:\n```json\n{\n  \"total_clips\": 12,\n  \"tamano_total_mb\": 145.6,\n  \"clips\": [\n    {\n      \"nombre\": \"todonoticias-20251007_120000_120330.mp4\",\n      \"tamano_mb\": 12.3,\n      \"fecha_creacion\": \"2025-10-07T12:05:30-03:00\",\n      \"edad_horas\": 0.5\n    }\n  ]\n}\n```\n\nNotas:\n- Analiza todos los archivos en clips/\n- Calcula tamaño total en MB\n- Útil para monitorear uso de espacio"
+          },
+          "response": []
+        },
+        {
+          "name": "Estado del scheduler",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/maintenance/scheduler/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "maintenance", "scheduler", "status"]
+            },
+            "description": "Obtiene el estado del scheduler de limpieza automática.\n\nRespuesta:\n```json\n{\n  \"habilitado\": true,\n  \"en_ejecucion\": true,\n  \"intervalo_horas\": 1.0,\n  \"max_age_horas\": 2.0,\n  \"jobs_programados\": 1,\n  \"proxima_ejecucion\": \"2025-10-07T13:00:00-03:00\"\n}\n```\n\nNotas:\n- Muestra si está habilitado y ejecutándose\n- Indica configuración actual de intervalos\n- Informa próxima ejecución\n- Se controla con variables de entorno:\n  - CLEANUP_ENABLED (default: True)\n  - CLEANUP_INTERVAL_HOURS (default: 1.0)\n  - CLEANUP_MAX_AGE_HOURS (default: 2.0)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

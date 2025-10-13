@@ -14,6 +14,29 @@
   color: var(--text-muted);
 }
 
+.download-help-text {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.download-help-text .help-icon {
+  display: inline-block;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  vertical-align: middle;
+}
+
+.download-help-text strong {
+  color: rgba(96, 165, 250, 0.95);
+  font-weight: 600;
+}
+
 .transcription-column p strong {
   color: rgba(226, 232, 240, 0.95);
 }

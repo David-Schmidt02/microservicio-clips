@@ -27,10 +27,10 @@ class TranscripcionClipRequest(BaseModel):
 
 class TranscripcionResponse(BaseModel):
     texto: str
-    canal: str
-    name: str
+    canal: str # Slug del canal (EJ: "olgaenvivo_")
+    name: str # Nombre del canal (EJ: "Olga en Vivo")
     timestamp: str
-    service: Optional[str] = None
+    service: Optional[str] = None # (EJ: "Soflex1")
     channel_id: Optional[str] = None
 
 

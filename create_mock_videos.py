@@ -137,6 +137,6 @@ if __name__ == "__main__":
     print(f"\n🎉 ¡Configuración mock completada!")
     print(f"\n📋 Próximos pasos:")
     print(f"   1. Indexar datos de ejemplo en Elasticsearch")
-    print(f"   2. Levantar el backend: uvicorn backend.main:app --port 8001 --reload")
+    print(f"   2. Levantar el backend: uvicorn backend.main:app --port 8000 --reload")
     print(f"   3. Levantar el frontend: python -m http.server 8080 (en carpeta frontend/)")
     print(f"   4. Probar búsquedas con: 'presidente', 'selección', 'protestas'")
