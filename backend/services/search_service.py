@@ -60,30 +60,23 @@ class SearchService:
         transcripciones = []
 
         if self.video_repo:
-            try:
-                rango = await self.video_repo.obtener_rango_temporal_video(canal, timestamp)
+            rango = await self.video_repo.obtener_rango_temporal_video(canal, timestamp)
 
-                if rango:
-                    timestamp_inicio, timestamp_fin = rango
+            if rango:
+                timestamp_inicio, timestamp_fin = rango
 
-                    # Usar el nuevo método con rango específico
-                    if hasattr(self.transcripcion_repo, 'obtener_transcripciones_por_rango_temporal'):
-                        transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_rango_temporal(
-                            canal, timestamp_inicio, timestamp_fin
-                        )
-                    else:
-                        # Fallback si el repo no tiene el método nuevo
-                        transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_clip(
-                            canal, timestamp, duracion_segundos
-                        )
+                # Usar el nuevo método con rango específico
+                if hasattr(self.transcripcion_repo, 'obtener_transcripciones_por_rango_temporal'):
+                    transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_rango_temporal(
+                        canal, timestamp_inicio, timestamp_fin
+                    )
                 else:
-                    # No se encontró video, usar método de fallback
+                    # Fallback si el repo no tiene el método nuevo
                     transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_clip(
                         canal, timestamp, duracion_segundos
                     )
-
-            except Exception:
-                # Error obteniendo rango temporal, usar método de fallback
+            else:
+                # No se encontró video, usar método de fallback
                 transcripciones = await self.transcripcion_repo.obtener_transcripciones_por_clip(
                     canal, timestamp, duracion_segundos
                 )

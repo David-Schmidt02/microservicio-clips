@@ -9,6 +9,8 @@ from backend.config.settings import settings
 from backend.api.v1.main import api_router
 from backend.api.dependencies import get_search_service, get_video_service
 from backend.scheduler.instances import cleanup_scheduler
+from backend.middleware.transcriptionsHandleError import transcriptions_error_handler
+from backend.middleware.videosHandleError import videos_error_handler
 
 
 @asynccontextmanager
@@ -61,6 +63,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Registrar middlewares de manejo de errores
+app.middleware("http")(transcriptions_error_handler)
+app.middleware("http")(videos_error_handler)
 
 # Incluir routers de la API
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)

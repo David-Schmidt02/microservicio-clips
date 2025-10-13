@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**IMPORTANTE: Siempre responde en español al trabajar en este proyecto.**
+
 ## Project Overview
 
 This is a **video clip search and concatenation microservice** for TV streaming content. The system searches transcriptions stored in Elasticsearch and generates video clips by concatenating segments from the file system.
@@ -16,6 +18,7 @@ This is a **video clip search and concatenation microservice** for TV streaming 
 - **Backend**: FastAPI (Python) with layered architecture
 - **Database**: Elasticsearch for transcription search
 - **Video processing**: FFmpeg for concatenation
+- **Task scheduling**: APScheduler for automated cleanup
 - **Frontend**: Vanilla JavaScript (HTML/CSS/JS modules)
 - **Timezone**: All timestamps use `America/Argentina/Buenos_Aires` (pytz)
 
@@ -75,36 +78,56 @@ The backend follows **Clean Architecture** principles with clear separation of c
 
 ```
 backend/
-├── main.py                      # FastAPI app entry point
+├── main.py                      # FastAPI app entry point (with lifespan management)
 ├── config/
 │   ├── settings.py              # Centralized config with Pydantic
 │   └── .env                     # Environment variables
 ├── api/
-│   ├── dependencies.py          # Dependency injection
+│   ├── dependencies.py          # Dependency injection (repos, services, controllers)
 │   └── v1/
 │       ├── main.py              # API v1 router
 │       └── routes/
-│           ├── search.py        # Search endpoints
-│           └── clips.py         # Video/clip endpoints
+│           ├── search.py        # Search endpoints (thin layer)
+│           ├── clips.py         # Video/clip endpoints (thin layer)
+│           └── maintenance.py   # Cleanup and stats endpoints
+├── controllers/
+│   ├── search_controller.py    # HTTP logic and input validation for search
+│   └── video_controller.py     # HTTP logic and input validation for videos
 ├── services/
-│   ├── search_service.py        # Search business logic
-│   └── video_service.py         # Video processing logic
+│   ├── search_service.py        # Search business logic (no try-catch)
+│   ├── video_service.py         # Video processing logic (no try-catch)
+│   └── cleanup_service.py       # Clip cleanup logic
 ├── repositories/
 │   ├── base.py                  # Abstract interfaces
-│   ├── elasticsearch_repo.py   # ES data access
-│   └── file_system_repo.py     # File system data access
+│   ├── elasticsearch_repo.py   # ES data access (no try-catch)
+│   └── file_system_repo.py     # File system data access (no try-catch)
 ├── models/
 │   ├── domain.py                # Domain entities (Transcripcion, Video)
 │   └── schemas.py               # Pydantic request/response models
+├── scheduler/
+│   ├── cleanup_scheduler.py    # APScheduler for automated cleanup
+│   └── instances.py            # Shared scheduler instances
+├── middleware/
+│   ├── transcriptionsHandleError.py  # Catches all transcription-related errors
+│   └── videosHandleError.py          # Catches all video-related errors
 └── utils/
-    └── time_utils.py            # Timestamp utilities
+    ├── time_utils.py            # Timestamp utilities
+    └── validation.py            # Input validation utilities
 ```
 
 **Layer responsibilities:**
-- **API layer**: HTTP handling, validation, serialization (no business logic)
-- **Services layer**: Business logic, orchestration, validation (no HTTP/DB details)
-- **Repositories layer**: Data access (Elasticsearch, file system)
+- **Routes layer**: Define HTTP endpoints, delegate to controllers (ultra thin)
+- **Controllers layer**: HTTP handling, input validation, response formatting
+- **Services layer**: Business logic, orchestration (no HTTP details, no try-catch)
+- **Repositories layer**: Data access (no try-catch, let errors propagate)
+- **Middleware layer**: Error handling for all layers (catches and formats errors)
 - **Models layer**: Data structures and contracts
+
+**Error handling flow:**
+1. Controllers validate HTTP inputs and raise `HTTPException` for bad requests
+2. Services/Repositories raise domain exceptions (`ValueError`, `FileNotFoundError`, `RuntimeError`)
+3. Middlewares catch all exceptions and format appropriate HTTP responses
+4. No try-catch blocks in services or repositories - clean separation of concerns
 
 ### Frontend Architecture
 
@@ -155,6 +178,19 @@ The system uses FFmpeg's concat demuxer:
 3. Output filename format: `{canal}-{fecha}_{hora_inicio}_{hora_fin}.mp4`
 4. Generated clips are stored in `clips/` directory
 
+### Automated Cleanup System
+
+The application includes an automated cleanup scheduler that runs in the background:
+
+- **Scheduler**: Uses APScheduler (asyncio-based) to periodically clean old clips
+- **Configuration**: Controlled via environment variables in `settings.py`:
+  - `CLEANUP_ENABLED` (default: True) - Enable/disable automatic cleanup
+  - `CLEANUP_INTERVAL_HOURS` (default: 1.0) - How often to run cleanup
+  - `CLEANUP_MAX_AGE_HOURS` (default: 2.0) - Delete clips older than this
+- **Lifecycle**: Scheduler starts/stops with the FastAPI application lifespan
+- **Implementation**: `backend/scheduler/cleanup_scheduler.py` and `backend/services/cleanup_service.py`
+- **Manual control**: Use maintenance endpoints to trigger cleanup or check status
+
 ### Elasticsearch Search
 
 Search queries:
@@ -186,6 +222,11 @@ TIMEZONE_NAME=America/Argentina/Buenos_Aires
 VIDEO_DIR=canales
 OUTPUT_DIR=clips
 FFMPEG_BIN=ffmpeg
+
+# Cleanup configuration (optional)
+CLEANUP_ENABLED=true
+CLEANUP_INTERVAL_HOURS=1.0
+CLEANUP_MAX_AGE_HOURS=2.0
 ```
 
 ### Switching Between Dev/Prod Elasticsearch Indices
@@ -200,9 +241,38 @@ Edit `backend/config/settings.py`:
 
 1. **Define Pydantic schemas** in `backend/models/schemas.py`
 2. **Add repository method** in appropriate repo (e.g., `elasticsearch_repo.py`)
+   - No try-catch blocks - let exceptions propagate
 3. **Add service method** in appropriate service (e.g., `search_service.py`)
-4. **Add route** in `backend/api/v1/routes/` (e.g., `search.py`)
-5. **Update frontend** `api.js` if needed
+   - No try-catch blocks - focus on business logic
+   - Raise `ValueError` for validation errors
+4. **Add controller method** in appropriate controller (e.g., `search_controller.py`)
+   - Validate HTTP inputs (path traversal, injection, etc.)
+   - Call service methods
+   - Transform responses to schemas
+5. **Add route** in `backend/api/v1/routes/` (e.g., `search.py`)
+   - Ultra thin - just define endpoint and delegate to controller
+   - Use FastAPI's `Depends()` to inject controller
+6. **Update frontend** `api.js` if needed
+
+### Error Handling Architecture
+
+The application uses **centralized error handling** through middlewares:
+
+**How it works:**
+1. **Controllers**: Validate inputs and raise `HTTPException` for bad requests (400, 404)
+2. **Services/Repositories**: Raise domain exceptions without try-catch:
+   - `ValueError` for validation/business rule violations
+   - `FileNotFoundError` for missing resources
+   - `RuntimeError` for processing errors (e.g., FFmpeg failures)
+3. **Middlewares**: Catch exceptions and format HTTP responses:
+   - `transcriptionsHandleError`: Handles Elasticsearch and transcription errors
+   - `videosHandleError`: Handles file system and video processing errors
+
+**Benefits:**
+- Clean code without repetitive try-catch blocks
+- Consistent error responses across all endpoints
+- Easy to modify error handling globally
+- Better separation of concerns
 
 ### Finding Videos by Timestamp
 
@@ -211,6 +281,8 @@ The `FileSystemRepository.obtener_videos_vecinos()` method:
 2. Lists all `.ts` files in the channel directory
 3. Finds the file whose time range contains the timestamp
 4. Returns neighboring files based on `rango` parameter
+
+**Important**: The search handles channel names with underscores (e.g., `olgaenvivo_`) correctly. Files are matched based on the channel prefix, so `olgaenvivo_20251007_120000_20251007_120130.ts` is found when searching for channel `olgaenvivo_`.
 
 ### Debugging Video Concatenation Issues
 
@@ -256,6 +328,11 @@ const CONFIG = { API_BASE_URL: "http://127.0.0.1:8001" };
 - `GET /api/v1/clips/descargar?clip={clip}` - Download generated clip
 - `GET /api/v1/clips/video/{canal}/{archivo}` - Serve individual video file
 
+### Maintenance
+- `POST /api/v1/maintenance/cleanup?max_age_hours={hours}` - Manually trigger cleanup
+- `GET /api/v1/maintenance/stats` - Get statistics about stored clips
+- `GET /api/v1/maintenance/scheduler/status` - Get scheduler status
+
 ### Health
 - `GET /health` - Service health check
 
@@ -288,10 +365,26 @@ app.dependency_overrides[get_search_service] = lambda: MockSearchService()
 - Development branch: `development` (current)
 - Recent commits focus on timezone fixes and layered architecture refactoring
 
+## Application Lifecycle
+
+The FastAPI application uses `@asynccontextmanager` for lifecycle management in `backend/main.py`:
+
+**Startup**:
+1. Prints startup banner with project name and version
+2. Initializes cleanup scheduler if `CLEANUP_ENABLED=True`
+3. Scheduler begins running in background
+
+**Shutdown**:
+1. Gracefully stops the cleanup scheduler
+2. Ensures no cleanup tasks are left running
+
+This pattern ensures clean startup/shutdown of background tasks.
+
 ## Important Notes
 
 - **Never modify video file naming conventions** - the system relies on the timestamp format
 - **Always validate timestamps** - use `time_utils.py` functions
 - **Test with mock data first** - use `create_mock_videos.py` and `index_sample_data.py`
 - **CORS is permissive** - restrict `ALLOWED_ORIGINS` in production
-- **Clean up generated clips** - the `clips/` directory grows over time
+- **Automatic cleanup enabled by default** - configure via `CLEANUP_ENABLED` if you need to disable it
+- **Channel names with underscores**: The system handles channel names like `olgaenvivo_` (trailing underscore)

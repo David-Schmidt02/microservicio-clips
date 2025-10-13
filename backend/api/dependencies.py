@@ -7,6 +7,8 @@ from backend.repositories.elasticsearch_repo import ElasticsearchRepository
 from backend.repositories.file_system_repo import FileSystemRepository
 from backend.services.search_service import SearchService
 from backend.services.video_service import VideoService
+from backend.controllers.search_controller import SearchController
+from backend.controllers.video_controller import VideoController
 
 
 # === REPOSITORIOS ===
@@ -40,3 +42,19 @@ def get_video_service(
 ) -> VideoService:
     """Dependencia para obtener el servicio de videos"""
     return VideoService(video_repo)
+
+
+# === CONTROLLERS ===
+
+def get_search_controller(
+    search_service: SearchService = Depends(get_search_service)
+) -> SearchController:
+    """Dependencia para obtener el controller de búsqueda"""
+    return SearchController(search_service)
+
+
+def get_video_controller(
+    video_service: VideoService = Depends(get_video_service)
+) -> VideoController:
+    """Dependencia para obtener el controller de videos"""
+    return VideoController(video_service)
