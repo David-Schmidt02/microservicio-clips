@@ -36,6 +36,7 @@ class FileSystemRepository(VideoRepositoryInterface):
             raise ValueError(f"Canal contiene caracteres inválidos: {canal}")
 
         tm_start = self._formatear_timestamp(timestamp)
+        print(f"Buscando videos vecinos en canal '{canal}' alrededor de '{tm_start}' con rango {rango}")
         canal_path = os.path.join(self.video_dir, canal)
         
         if not os.path.exists(canal_path):
@@ -45,6 +46,7 @@ class FileSystemRepository(VideoRepositoryInterface):
             f for f in os.listdir(canal_path) 
             if f.endswith(".ts")
         ])
+        print(f"Archivos encontrados en canal '{canal}': {archivos}")
         
         # Buscar el archivo cuyo rango de tiempo contenga el timestamp buscado
         timestamp_dt = parse_timestamp(timestamp)
@@ -56,6 +58,7 @@ class FileSystemRepository(VideoRepositoryInterface):
                 break
 
         if not archivo_referencia:
+            print(f"No se encontró un archivo de referencia para el timestamp: {timestamp}")
             return []
             
         idx = archivos.index(archivo_referencia)
@@ -66,7 +69,8 @@ class FileSystemRepository(VideoRepositoryInterface):
 
         # Validar si hay gaps (saltos temporales) en los videos seleccionados
         # self._validar_continuidad_temporal(videos_seleccionados)  # Comentado para producción
-
+        print("--"*20)
+        print(f"Videos seleccionados: {videos_seleccionados}")
         return videos_seleccionados
     
     async def concatenar_videos(self, canal: str, videos: List[str]) -> str:
@@ -230,33 +234,25 @@ class FileSystemRepository(VideoRepositoryInterface):
 
     def _extraer_rango_temporal_archivo(self, nombre_archivo: str) -> tuple[datetime, datetime] | None:
         """
-        Extrae el rango temporal (inicio, fin) de un nombre de archivo.
-
-        Formato esperado: canal_YYYYMMDD_HHMMSS_YYYYMMDD_HHMMSS.ts
-
+        Extrae el rango temporal (inicio, fin) de un nombre de archivo usando regex.
+        Formato esperado: cualquier_canal_YYYYMMDD_HHMMSS_YYYYMMDD_HHMMSS.ts
         Returns:
             Tupla (inicio_dt, fin_dt) como datetime naive, o None si no se puede parsear
         """
+        import re
         try:
-            partes = nombre_archivo.replace('.ts', '').split('_')
-            if len(partes) < 5:
-                return None
-
-            fecha_inicio = partes[1]  # YYYYMMDD
-            hora_inicio = partes[2]   # HHMMSS
-            fecha_fin = partes[3]     # YYYYMMDD
-            hora_fin = partes[4]      # HHMMSS
-
-            inicio_str = f"{fecha_inicio}_{hora_inicio}"
-            fin_str = f"{fecha_fin}_{hora_fin}"
-
-            inicio_dt = datetime.strptime(inicio_str, "%Y%m%d_%H%M%S")
-            fin_dt = datetime.strptime(fin_str, "%Y%m%d_%H%M%S")
-
-            return (inicio_dt, fin_dt)
-
+            base = nombre_archivo.replace('.ts', '')
+            # Busca los bloques de fecha/hora al final del nombre
+            match = re.search(r'(\d{8}_\d{6})_(\d{8}_\d{6})$', base)
+            if match:
+                inicio_str, fin_str = match.groups()
+                inicio_dt = datetime.strptime(inicio_str, "%Y%m%d_%H%M%S")
+                fin_dt = datetime.strptime(fin_str, "%Y%m%d_%H%M%S")
+                return inicio_dt, fin_dt
+            return None
         except Exception:
             return None
+
 
     def _timestamp_esta_en_archivo(self, nombre_archivo: str, timestamp_dt: datetime) -> bool:
         """

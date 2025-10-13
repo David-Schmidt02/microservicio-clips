@@ -34,8 +34,10 @@ async def obtener_lista_videos(
         # VALIDACIÓN: Prevenir path traversal y caracteres inválidos
         if '..' in canal or '/' in canal or '\\' in canal:
             raise HTTPException(status_code=400, detail="Nombre de canal contiene caracteres inválidos")
+        print("Parámetros recibidos - canal:", canal, "timestamp:", timestamp, "rango:", rango)
 
         videos = await video_service.obtener_videos_vecinos(canal.strip(), timestamp, rango)
+        print("Videos encontrados:", videos)
         return VideosResponse(videos=videos)
 
     except ValueError as e:

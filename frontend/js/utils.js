@@ -93,7 +93,8 @@ export function extraerInfoVideo(origen) {
 function extraerInfoDesdeNombre(nombre) {
   const archivo = obtenerNombreArchivo(nombre);
   const sinExtension = quitarExtension(archivo);
-  const match = sinExtension.match(/^(?<canal>[^_]+)_(?<fechaInicio>\d{8})_(?<horaInicio>\d{6})(?:_(?<fechaFin>\d{8})_(?<horaFin>\d{6}))?/);
+  // Nueva regex: el canal puede tener cualquier caracter, incluyendo guiones bajos
+  const match = sinExtension.match(/^(?<canal>.+?)_(?<fechaInicio>\d{8})_(?<horaInicio>\d{6})(?:_(?<fechaFin>\d{8})_(?<horaFin>\d{6}))?/);
 
   if (!match || !match.groups) {
     return {

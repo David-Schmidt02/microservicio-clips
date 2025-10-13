@@ -68,6 +68,7 @@ async function seleccionarClipRelacionado(nombreArchivo) {
   const timestampFin = infoClip.timestampFin;
 
   if (!canal || !timestampInicio || !timestampFin) {
+    console.log("Información del clip incompleta:", { canal, timestampInicio, timestampFin });
     mostrarPopup("No se pudo interpretar el clip seleccionado");
     return;
   }
@@ -342,37 +343,42 @@ function encontrarArchivoConTimestamp(archivos, timestamp) {
   try {
     const timestampObj = new Date(timestamp);
     console.log("🔍 Buscando video para timestamp:", timestamp);
-
-    for (const archivo of archivos) {
-      const partes = archivo.replace('.ts', '').split('_');
-      if (partes.length < 5) {
-        continue;
-      }
-
-      // Construir timestamps de inicio y fin CON ZONA HORARIA de Argentina
-      const fechaInicio = partes[1]; // YYYYMMDD
-      const horaInicio = partes[2];   // HHMMSS
-      const fechaFin = partes[3];     // YYYYMMDD
-      const horaFin = partes[4];      // HHMMSS
-
-      // IMPORTANTE: Agregar zona horaria -03:00 (Argentina) como en crearTimestampIso()
-      const inicioStr = `${fechaInicio.slice(0,4)}-${fechaInicio.slice(4,6)}-${fechaInicio.slice(6,8)}T${horaInicio.slice(0,2)}:${horaInicio.slice(2,4)}:${horaInicio.slice(4,6)}-03:00`;
-      const finStr = `${fechaFin.slice(0,4)}-${fechaFin.slice(4,6)}-${fechaFin.slice(6,8)}T${horaFin.slice(0,2)}:${horaFin.slice(2,4)}:${horaFin.slice(4,6)}-03:00`;
-
-      const inicioObj = new Date(inicioStr);
-      const finObj = new Date(finStr);
-
-      if (timestampObj >= inicioObj && timestampObj < finObj) {
-        console.log("✅ Match encontrado:", archivo);
-        return archivo;
-      }
-    }
-
-    console.warn("⚠️ No se encontró archivo que contenga el timestamp");
-    return null;
-
+          // Nueva lógica: extraer los bloques de fecha/hora con regex
+          const re = /(\d{8}_\d{6})_(\d{8}_\d{6})\.ts$/;
+          
+          for (const archivo of archivos) {
+            const match = archivo.match(re);
+            if (!match) continue;
+            
+            const [ , inicioRaw, finRaw ] = match;
+            
+            // Convertir a formato ISO con zona horaria -03:00
+            const inicioStr = `${inicioRaw.slice(0,4)}-${inicioRaw.slice(4,6)}-${inicioRaw.slice(6,8)}T${inicioRaw.slice(9,11)}:${inicioRaw.slice(11,13)}:${inicioRaw.slice(13,15)}-03:00`;
+            const finStr = `${finRaw.slice(0,4)}-${finRaw.slice(4,6)}-${finRaw.slice(6,8)}T${finRaw.slice(9,11)}:${finRaw.slice(11,13)}:${finRaw.slice(13,15)}-03:00`;
+            
+            const inicioObj = new Date(inicioStr);
+            const finObj = new Date(finStr);
+            
+            if (timestampObj >= inicioObj && timestampObj < finObj) {
+              console.log("✅ Match encontrado:", archivo);
+              return archivo;
+            }
+          }
+          
+          console.warn("⚠️ No se encontró archivo que contenga el timestamp");
+          return null;
+          
   } catch (error) {
     console.error("❌ Error buscando archivo:", error);
     return null;
   }
+  
+  // --- LÓGICA ANTERIOR COMENTADA ---
+  // for (const archivo of archivos) {
+  //   const partes = archivo.replace('.ts', '').split('_');
+  //   if (partes.length < 5) {
+  //     continue;
+  //   }
+  //   // ...extracción manual de fechas...
+  // }
 }
